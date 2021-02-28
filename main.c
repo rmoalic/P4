@@ -3,7 +3,10 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include "p4.h"
+
+//TODO: Use Surface for rendering the board
 
 const int WIDTH  = 640;
 const int HEIGHT = 480;
@@ -87,6 +90,29 @@ void p4_display_columns(SDL_Renderer* ren, P4_Columns columns) {
     }
 }
 
+void render_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int x, int y, SDL_Color color) {
+    SDL_Surface* surface = TTF_RenderText_Solid(font, text, color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(ren, surface);
+    SDL_Rect r = {x, y, surface->w, surface->h};
+    SDL_RenderCopy(ren, texture, NULL, &r);
+}
+
+void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
+    char text[20];
+    
+    int x = R_MARGIN;
+    int y = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;;
+    if (game.active == RED) {
+        snprintf(text, 19, "Red turn");
+    } else if (game.active == YELLOW) {
+        snprintf(text, 19, "Yellow turn");
+    } else {
+        snprintf(text, 19, "ERROR");
+    }
+    
+    render_text(ren, font, text, x, y, p4_repr(game.active));
+
+}
 
 void p4_init_col_rect(P4_Columns* columns) {
     SDL_Rect r;
@@ -150,7 +176,7 @@ int main() {
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
-        fprintf(stderr,"Erreur à l'initialisation de SDL\n");
+        fprintf(stderr,"SDL Initialisation faillure\n");
         return EXIT_FAILURE;
     }
     atexit(SDL_Quit);
@@ -160,10 +186,16 @@ int main() {
 
     if (!win || !ren)
     {
-        fprintf(stderr,"Erreur à la création de la fenêtre\n");
+        fprintf(stderr,"Window oppening faillure\n");
         return EXIT_FAILURE;
     }
 
+    TTF_Init();
+    TTF_Font* font = TTF_OpenFont("SourceSansPro-SemiBold.ttf", 25);
+    if (font == NULL) {
+        fprintf(stderr,"Error while loading font: %s\n", TTF_GetError());
+        return EXIT_FAILURE;
+    }
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
@@ -196,6 +228,7 @@ int main() {
 
         p4_display_board(ren, board);
         p4_display_columns(ren, columns);
+        p4_display_game_info(ren, font, game);
         
 
         
@@ -203,6 +236,7 @@ int main() {
         SDL_Delay(50);
     }
     
+    TTF_CloseFont(font);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     return EXIT_SUCCESS;
