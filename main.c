@@ -23,10 +23,6 @@ typedef struct p4_columns {
     struct p4_column c[BOARD_NC];
 } P4_Columns;
 
-typedef struct p4_game {
-    CASE_COLOR active;
-} P4_Game;
-
 SDL_Color p4_repr(CASE_COLOR color) {
     SDL_Color c;
     c.a = 255;
@@ -56,7 +52,7 @@ SDL_Color p4_repr(CASE_COLOR color) {
     return c;
 }
 
-void p4_display_board(SDL_Renderer* ren, P4_Board board) {
+void p4_display_board(SDL_Renderer* ren, P4_Game game) {
     SDL_Rect r;
     r.w = R_W;
     r.h = R_W;
@@ -69,7 +65,7 @@ void p4_display_board(SDL_Renderer* ren, P4_Board board) {
             r.x = pos_w;
             r.y = pos_h;
             
-            SDL_Color color = p4_repr(board.b[i][j].p);
+            SDL_Color color = p4_repr(game.board[i][j].p);
 
             SDL_SetRenderDrawColor(ren, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(ren, &r);
@@ -127,16 +123,6 @@ void p4_init_col_rect(P4_Columns* columns) {
     }
 }
 
-void game_switch(P4_Game* game) {
-    if (game->active == RED) {
-        game->active = YELLOW;
-    } else if (game->active == YELLOW) {
-        game->active = RED;
-    } else {
-        assert(false);
-    }
-}
-
 void onHover(SDL_Event input, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     //printf("point %d %d\n", p.x, p.y);
@@ -150,12 +136,12 @@ void onHover(SDL_Event input, P4_Columns* columns) {
     }
 }
 
-void onClick(SDL_Event input, P4_Game* game, P4_Board* board, P4_Columns* columns) {
+void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     for (int i = 0; i < BOARD_NC; i++) {
         SDL_Rect r = columns->c[i].c;
         if (SDL_PointInRect(&p, &r)) {
-            if (insert_in_col(board, i, game->active)) {
+            if (insert_in_col(game, i)) {
                 game_switch(game);
             }
             break;
@@ -169,7 +155,6 @@ int main() {
     SDL_Event input;
     
     P4_Game game;
-    P4_Board board;
     P4_Columns columns;
     
     bool quit = false;
@@ -189,6 +174,7 @@ int main() {
         fprintf(stderr,"Window oppening faillure\n");
         return EXIT_FAILURE;
     }
+    SDL_SetWindowTitle(win, "P4");
 
     TTF_Init();
     TTF_Font* font = TTF_OpenFont("SourceSansPro-SemiBold.ttf", 25);
@@ -200,11 +186,8 @@ int main() {
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
     p4_init_col_rect(&columns);
-    init_board(&board);
+    init_board(&game);
     game.active = RED; // RED begins
-    debug_print_board(board);
-    insert_in_col(&board, 0, RED);
-    debug_print_board(board);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
@@ -216,7 +199,7 @@ int main() {
                 onHover(input, &columns);
             } break;
             case SDL_MOUSEBUTTONDOWN: {
-                onClick(input, &game, &board, &columns);
+                onClick(input, &game, &columns);
             } break;
             default: {
             }
@@ -226,7 +209,7 @@ int main() {
         SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
         SDL_RenderClear(ren);
 
-        p4_display_board(ren, board);
+        p4_display_board(ren, game);
         p4_display_columns(ren, columns);
         p4_display_game_info(ren, font, game);
         

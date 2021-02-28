@@ -3,20 +3,21 @@
 #include <assert.h>
 #include "p4.h"
 
-void init_board(P4_Board* board) {
+void init_board(P4_Game* game) {
     for (int i = 0; i < BOARD_NC; i++) {
         for (int j = 0; j < BOARD_NR; j++) {
-            board->b[i][j].p = NONE;
+            game->board[i][j].p = NONE;
         }
     }
+    game->active = RED;
 }
 
-bool change_case_color(P4_Board* board, int col, int row, CASE_COLOR color) {
-    assert(board != NULL);
+bool change_case_color(P4_Game* game, int col, int row, CASE_COLOR color) {
+    assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
     assert(row >= 0 && row < BOARD_NR);
     
-    P4_Case* bcase = &(board->b[col][row]);
+    P4_Case* bcase = &(game->board[col][row]);
     bool changed = false;
     
     if (bcase->p == NONE) {
@@ -28,12 +29,12 @@ bool change_case_color(P4_Board* board, int col, int row, CASE_COLOR color) {
     return changed;
 }
 
-int find_first_available_position_in_col(P4_Board* board, int col) {
-    assert(board != NULL);
+int find_first_available_position_in_col(P4_Game* game, int col) {
+    assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
     
     int pos = -1;
-    P4_Case* r_case = board->b[col];
+    P4_Case* r_case = game->board[col];
     
     for (int i = 0; i < BOARD_NR; i++) {
         if (r_case[i].p == NONE) {
@@ -44,25 +45,39 @@ int find_first_available_position_in_col(P4_Board* board, int col) {
     return pos;
 }
 
-bool insert_in_col(P4_Board* board, int col, CASE_COLOR color) {
-    assert(board != NULL);
+bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
+    assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
     
     bool inserted = false;
-    int row = find_first_available_position_in_col(board, col);
+    int row = find_first_available_position_in_col(game, col);
     if (row < 0) {
         printf("Column %d is full\n", col);
         inserted = false;
     } else {
-        change_case_color(board, col, row, color);
+        change_case_color(game, col, row, color);
         inserted = true;
     }
     
     return inserted;
 }
 
-bool check_win_on_insert(P4_Board* board, int col, int row) {
-    assert(board != NULL);
+bool insert_in_col(P4_Game* game, int col) {
+    return insert_in_col_impl(game, col, game->active);
+}
+
+void game_switch(P4_Game* game) {
+    if (game->active == RED) {
+        game->active = YELLOW;
+    } else if (game->active == YELLOW) {
+        game->active = RED;
+    } else {
+        assert(false);
+    }
+}
+
+bool check_win_on_insert(P4_Game* game, int col, int row) {
+    assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
     assert(row >= 0 && row < BOARD_NR);
     
@@ -106,11 +121,11 @@ char repr_color(CASE_COLOR color) {
     return c;
 }
 
-void debug_print_board(P4_Board board) {
+void debug_print_board(P4_Game game) {
     printf("board--------------------------\n");
     for (int j = BOARD_NR-1; j >= 0; j--) {
         for (int i = 0; i < BOARD_NC; i++) {
-            printf("%c", repr_color(board.b[i][j].p));
+            printf("%c", repr_color(game.board[i][j].p));
         }
         printf("\n");
     }
