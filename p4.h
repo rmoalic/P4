@@ -18,6 +18,7 @@ typedef struct p4_case {
 typedef struct p4_game {
     P4_Case board[BOARD_NC][BOARD_NR];
     CASE_COLOR active;
+    CASE_COLOR winner;
 } P4_Game;
 
 void init_board(P4_Game* game);

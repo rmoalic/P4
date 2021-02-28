@@ -108,6 +108,16 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     
     render_text(ren, font, text, x, y, p4_repr(game.active));
 
+    if (game.winner != NONE) {
+        y = y + 25 + R_MARGIN;
+        if (game.winner == RED) {
+            snprintf(text, 19, "Red WINS !");
+        } else if (game.winner == YELLOW) {
+            snprintf(text, 19, "Yellow WINS !");
+        }
+        render_text(ren, font, text, x, y, p4_repr(game.winner));
+    }
+
 }
 
 void p4_init_col_rect(P4_Columns* columns) {

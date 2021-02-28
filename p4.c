@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "p4.h"
 
+bool check_win_on_insert(P4_Game* game, int col, int row);
+
 void init_board(P4_Game* game) {
     for (int i = 0; i < BOARD_NC; i++) {
         for (int j = 0; j < BOARD_NR; j++) {
@@ -10,6 +12,7 @@ void init_board(P4_Game* game) {
         }
     }
     game->active = RED;
+    game->winner = NONE;
 }
 
 bool change_case_color(P4_Game* game, int col, int row, CASE_COLOR color) {
@@ -56,6 +59,11 @@ bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
         inserted = false;
     } else {
         change_case_color(game, col, row, color);
+        bool win = check_win_on_insert(game, col, row);
+        if (win) {
+            game->winner = color;
+        }
+        printf("win: %d\n", win);
         inserted = true;
     }
     
@@ -76,27 +84,124 @@ void game_switch(P4_Game* game) {
     }
 }
 
+bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
+    assert(game != NULL);
+    assert(col >= 0 && col < BOARD_NC);
+    assert(row >= 0 && row < BOARD_NR);
+    assert(vcol >= -1 && vcol <= 1);
+    assert(vrow >= -1 && vrow <= 1);
+    assert(! (vrow == 0 && !(vcol != 0)));
+    assert(! (vcol == 0 && !(vrow != 0)));
+    
+    printf("CHECK %d %d\n", vcol, vrow);
+        
+    bool ret = false;
+    bool hope = true;
+    bool invcol = false;
+    bool invrow = false;
+    bool diag = vrow != 0 && vcol != 0;
+    int acc = 1;
+    int ncol = col;
+    int nrow = row;
+
+    
+    CASE_COLOR color = game->board[col][row].p;
+    CASE_COLOR ncolor;
+    printf("\tstart %d %d\n", col, row);
+    while (hope && acc < 4) {
+        ncol = ncol + (vcol * (invcol ? -1 : 1));
+        nrow = nrow + (vrow * (invrow ? -1 : 1));                    
+
+        printf("\tcheck %d %d \n", ncol, nrow);
+
+        // Bound Check for row and col, if out of bound, reverse row or col vector 
+        // direction and set current position to the start of the chain
+        // in order to recalculate new positions. If the vector is 
+        // diagonal, both directions have to change.
+        if ((nrow < 0 || nrow >= BOARD_NR)) {
+            if (! invrow) {
+                invrow = true;
+                nrow = row;
+                if (diag) {
+                    invcol = true;
+                    ncol = col;
+                }
+            } else {
+                hope = false;
+            }
+            printf("\tBound check rev on row\n");
+            continue;
+        }
+        if ((ncol < 0 || ncol >= BOARD_NC)) {
+            if (! invcol) {
+                invcol = true;
+                ncol = col;
+                if (diag) {
+                    invrow = true;
+                    nrow = row;
+                }
+            } else {
+                hope = false;
+            }
+            printf("\tBound check rev on col\n");
+            continue;
+        }
+
+        //assert(col != ncol && row != nrow);
+        
+        ncolor = game->board[ncol][nrow].p;
+        
+        // Color check, if the color matches, continue the chain.
+        // Otherwise if we did not already reverse the vector, we
+        // reverse it, if no more piece of the right color can be
+        // found, it is not a win.
+        if (ncolor == color) {
+            acc = acc + 1;
+            printf("\tvalidate %d, %d \n", ncol, nrow);
+        } else {
+              if (! invcol && vcol != 0) {
+                  printf("\t invcol col<>\n");
+                  invcol = true;
+                  ncol = col;
+                  if (diag) {
+                      invrow = true;
+                      nrow = row;
+                  }
+              } else if (! invrow && vrow != 0) {
+                  printf("\t invrow col<>\n");
+                  invrow = true;
+                  nrow = row;
+                  if (diag) {
+                      invcol = true;
+                      ncol = col;
+                  }
+              } else {
+                  hope = false;
+                  ret = false;
+              }
+        }
+    }
+    printf("acc: %d\n\n", acc);
+    if (acc == 4) {
+        ret = true;
+    }
+    
+    return ret;
+}
+
 bool check_win_on_insert(P4_Game* game, int col, int row) {
     assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
     assert(row >= 0 && row < BOARD_NR);
     
-    //CASE_COLOR color = board->b[col][row].p;
-    
-    if (col > 0 && col < BOARD_NC-1) {
-        // check left and right
-        
-    } else if (col > 0) {
-        // check left
-    
-    } else if (col < BOARD_NC-1) {
-        //check right
-        
-    } else {
-        assert(false);
-    }
-    
-    return false;
+    return check_chain(game, col, row,  0,  1) ||
+           check_chain(game, col, row,  1,  0) ||
+           check_chain(game, col, row,  1,  1) ||
+        /* check_chain(game, col, row, -1, -1) ||
+           check_chain(game, col, row, -1,  0) ||
+           check_chain(game, col, row,  0, -1) ||
+           check_chain(game, col, row,  1, -1) || */
+           check_chain(game, col, row, -1,  1);
 }
 
 char repr_color(CASE_COLOR color) {
