@@ -97,9 +97,7 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
         
     bool ret = false;
     bool hope = true;
-    bool invcol = false;
-    bool invrow = false;
-    bool diag = vrow != 0 && vcol != 0;
+    bool inv = false;
     int acc = 1;
     int ncol = col;
     int nrow = row;
@@ -109,41 +107,23 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     CASE_COLOR ncolor;
     printf("\tstart %d %d\n", col, row);
     while (hope && acc < 4) {
-        ncol = ncol + (vcol * (invcol ? -1 : 1));
-        nrow = nrow + (vrow * (invrow ? -1 : 1));                    
+        ncol = ncol + (vcol * (inv ? -1 : 1));
+        nrow = nrow + (vrow * (inv ? -1 : 1));                    
 
         printf("\tcheck %d %d \n", ncol, nrow);
 
-        // Bound Check for row and col, if out of bound, reverse row or col vector 
+        // Bound Check for row and col, if out of bound, reverse vector 
         // direction and set current position to the start of the chain
-        // in order to recalculate new positions. If the vector is 
-        // diagonal, both directions have to change.
-        if ((nrow < 0 || nrow >= BOARD_NR)) {
-            if (! invrow) {
-                invrow = true;
+        // in order to recalculate new positions.
+        if ((nrow < 0 || nrow >= BOARD_NR) || (ncol < 0 || ncol >= BOARD_NC)) {
+            if (! inv) {
+                inv = true;
                 nrow = row;
-                if (diag) {
-                    invcol = true;
-                    ncol = col;
-                }
-            } else {
-                hope = false;
-            }
-            printf("\tBound check rev on row\n");
-            continue;
-        }
-        if ((ncol < 0 || ncol >= BOARD_NC)) {
-            if (! invcol) {
-                invcol = true;
                 ncol = col;
-                if (diag) {
-                    invrow = true;
-                    nrow = row;
-                }
             } else {
                 hope = false;
             }
-            printf("\tBound check rev on col\n");
+            printf("\tBound check rev\n");
             continue;
         }
 
@@ -159,22 +139,11 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
             acc = acc + 1;
             printf("\tvalidate %d, %d \n", ncol, nrow);
         } else {
-              if (! invcol && vcol != 0) {
-                  printf("\t invcol col<>\n");
-                  invcol = true;
+              if (! inv) {
+                  printf("\t inv col<>\n");
+                  inv = true;
                   ncol = col;
-                  if (diag) {
-                      invrow = true;
-                      nrow = row;
-                  }
-              } else if (! invrow && vrow != 0) {
-                  printf("\t invrow col<>\n");
-                  invrow = true;
                   nrow = row;
-                  if (diag) {
-                      invcol = true;
-                      ncol = col;
-                  }
               } else {
                   hope = false;
                   ret = false;
@@ -197,10 +166,6 @@ bool check_win_on_insert(P4_Game* game, int col, int row) {
     return check_chain(game, col, row,  0,  1) ||
            check_chain(game, col, row,  1,  0) ||
            check_chain(game, col, row,  1,  1) ||
-        /* check_chain(game, col, row, -1, -1) ||
-           check_chain(game, col, row, -1,  0) ||
-           check_chain(game, col, row,  0, -1) ||
-           check_chain(game, col, row,  1, -1) || */
            check_chain(game, col, row, -1,  1);
 }
 
