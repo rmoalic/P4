@@ -13,8 +13,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: workflow_${{ github.run-id }}
-          release_name: Release ${{ github.run-id }}
+          tag_name: workflow_${{ github.run_id }}
+          release_name: Release ${{ github.run_id }}
           draft: false
           prerelease: true
 
@@ -41,7 +41,7 @@ jobs:
         with:
           upload_url: ${{ needs.makerelease.outputs.upload_url }}
           asset_path: linux64.zip
-          asset_name: linux64-${{ github.run-id }}.zip
+          asset_name: linux64-${{ github.run_id }}.zip
           asset_content_type: application/zip
   build-windows-msvc:
     runs-on: windows-2019
@@ -70,5 +70,5 @@ jobs:
         with:
           upload_url: ${{ needs.makerelease.outputs.upload_url }}
           asset_path: win64.zip
-          asset_name: win64-${{ github.run-id }}.zip
+          asset_name: win64-${{ github.run_id }}.zip
           asset_content_type: application/zip
