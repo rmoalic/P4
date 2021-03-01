@@ -12,3 +12,4 @@ cl.exe %CXXFLAGS% %INCLUDES% p4.c main.c /link %LIBS% ressource.res -SUBSYSTEM:w
 copy *.ttf out
 copy SDL2\lib\x64\*.dll out
 copy SDL2_ttf\lib\x64\*.dll out
+copy SDL2\README-SDL.txt out
