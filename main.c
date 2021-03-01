@@ -51,6 +51,17 @@ SDL_Color p4_repr(CASE_COLOR color) {
     }
     return c;
 }
+// 0279c2
+
+void p4_render_background(SDL_Renderer* ren) {
+    SDL_Rect r;
+    r.x = 0;
+    r.y = 0;
+    r.h = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;
+    r.w = BOARD_NC * (R_W + R_MARGIN) + R_MARGIN;
+    SDL_SetRenderDrawColor(ren, 2, 121, 194, 255);
+    SDL_RenderFillRect(ren, &r);
+}
 
 void p4_display_board(SDL_Renderer* ren, P4_Game game) {
     SDL_Rect r;
@@ -60,6 +71,8 @@ void p4_display_board(SDL_Renderer* ren, P4_Game game) {
     int pos_w = R_MARGIN;
     int pos_h = R_MARGIN;
     
+    p4_render_background(ren);
+
     for (int j = BOARD_NR-1; j >= 0; j--) {
         for (int i = 0; i < BOARD_NC; i++) {
             r.x = pos_w;
@@ -114,7 +127,7 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     char text[20];
     
     int x = R_MARGIN;
-    int y = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;;
+    int y = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;
 
 
     if (is_won(game)) {
