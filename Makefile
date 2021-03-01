@@ -1,6 +1,16 @@
+CC=clang
+LDFLAGS+=-lSDL2 -lSDL2_ttf
+CFLAGS+=-g -Wall -Wextra -pedantic
+#CFLAGS+=-O3 -Wall -Wextra -s -DNDEBUG -pedantic
+
 all: bin
 
 bin: main
 
 main: main.c p4.c
-	clang -g -Wall -Wextra -lSDL2 -lSDL2_ttf main.c p4.c -o main
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+clean:
+	rm main
+
+.PHONY: clean
