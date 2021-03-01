@@ -15,11 +15,11 @@
 
 //TODO: Use Surface for rendering the board
 
-const int WIDTH  = 640;
-const int HEIGHT = 480;
-
 #define R_W 50
 #define R_MARGIN 10
+
+const int WIDTH  = BOARD_NC * (R_W + R_MARGIN) + R_MARGIN;
+const int HEIGHT = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN * 2 + 25;
 
 struct p4_column {
     bool hover;
