@@ -1,0 +1,25 @@
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName", "github.com/rmoalic"
+      VALUE "FileDescription", "Connect Four Clone"
+      VALUE "FileVersion", "1.0"
+      VALUE "InternalName", "P4"
+      VALUE "OriginalFilename", "main.exe"
+      VALUE "ProductName", "P4"
+      VALUE "ProductVersion", "1.0"
+    END
+  END  
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
+
+2 ICON "p4.ico"
+	

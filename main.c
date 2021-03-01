@@ -2,8 +2,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+
+#ifdef _MSC_VER
+#include <SDL.h>
+#include <SDL_ttf.h>
+#else
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_ttf.h>	
+#endif
+
 #include "p4.h"
 
 //TODO: Use Surface for rendering the board
@@ -197,7 +204,7 @@ void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     SDL_Window *win = 0;
     SDL_Renderer *ren = 0;
     SDL_Event input;
