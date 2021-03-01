@@ -163,10 +163,10 @@ bool check_win_on_insert(P4_Game* game, int col, int row) {
     assert(col >= 0 && col < BOARD_NC);
     assert(row >= 0 && row < BOARD_NR);
     
-    return check_chain(game, col, row,  0,  1) ||
+    return check_chain(game, col, row,  0, -1) ||
            check_chain(game, col, row,  1,  0) ||
-           check_chain(game, col, row,  1,  1) ||
-           check_chain(game, col, row, -1,  1);
+           check_chain(game, col, row, -1, -1) ||
+           check_chain(game, col, row,  1, -1);
 }
 
 char repr_color(CASE_COLOR color) {
