@@ -137,14 +137,19 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     int y = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;
 
 
-    if (is_won(game)) {
-        CASE_COLOR winner = get_game_winner(game);
-        if (winner == RED) {
-            snprintf(text, 19, "Red WINS !");
-        } else if (winner == YELLOW) {
-            snprintf(text, 19, "Yellow WINS !");
+    if (is_finished(game)) {
+        if (is_won(game)) {
+            CASE_COLOR winner = get_game_winner(game);
+            if (winner == RED) {
+                snprintf(text, 19, "Red WINS !");
+            } else if (winner == YELLOW) {
+                snprintf(text, 19, "Yellow WINS !");
+            }
+            render_text(ren, font, text, x, y, p4_repr(game.winner));
+        } else {
+            snprintf(text, 19, "It's a tie");
+            render_text(ren, font, text, x, y, p4_repr(NONE));
         }
-        render_text(ren, font, text, x, y, p4_repr(game.winner));
     } else {
         CASE_COLOR active = get_game_active(game);
         if (active == RED) {
@@ -190,7 +195,7 @@ void onHover(SDL_Event input, P4_Columns* columns) {
 void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     for (int i = 0; i < BOARD_NC; i++) {
-        if (! is_won(*game)) {
+        if (! is_finished(*game)) {
             SDL_Rect r = columns->c[i].c;
             if (SDL_PointInRect(&p, &r)) {
                 if (insert_in_col(game, i)) {

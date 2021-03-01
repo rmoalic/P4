@@ -14,6 +14,7 @@ void init_game(P4_Game* game) {
     }
     game->active = RED;
     game->winner = NONE;
+    game->remaining_pieces = BOARD_NC * BOARD_NR;
 }
 
 void reset_game(P4_Game* game) {
@@ -22,6 +23,10 @@ void reset_game(P4_Game* game) {
 
 bool is_won(P4_Game game) {
     return game.winner != NONE;
+}
+
+bool is_finished(P4_Game game) {
+    return is_won(game) || game.remaining_pieces <= 0;
 }
 
 CASE_COLOR get_game_winner(P4_Game game) {
@@ -71,6 +76,7 @@ int find_first_available_position_in_col(P4_Game* game, int col) {
 
 bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
     assert(game != NULL);
+    assert(game->remaining_pieces > 0);
     assert(col >= 0 && col < BOARD_NC);
 
     bool inserted = false;
@@ -85,6 +91,7 @@ bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
             game->winner = color;
         }
         printf("win: %d\n", win);
+        game->remaining_pieces = game->remaining_pieces - 1;
         inserted = true;
     }
 

@@ -26,11 +26,14 @@ typedef struct p4_game {
     P4_Case board[BOARD_NC][BOARD_NR];
     CASE_COLOR active;
     CASE_COLOR winner;
+    int remaining_pieces;
 } P4_Game;
 
 void init_game(P4_Game* game);
 
 void reset_game(P4_Game* game);
+
+bool is_finished(P4_Game game);
 
 bool is_won(P4_Game game);
 
