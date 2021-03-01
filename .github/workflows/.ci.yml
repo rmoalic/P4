@@ -2,8 +2,10 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  make-release:
+  makerelease:
     runs-on: ubuntu-latest
+    output:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - name: Create Release
         id: create_release
@@ -18,7 +20,7 @@ jobs:
 
   build-linux-clang:
     runs-on: ubuntu-latest
-    needs: make-release
+    needs: makerelease
     steps:
       - uses: actions/checkout@v1
       - name: install 3rd party build tools
@@ -37,13 +39,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ make-release.steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.makerelease.outputs.upload_url }}
           asset_path: linux64.zip
           asset_name: linux64-${{ github.sha }}.zip
           asset_content_type: application/zip
   build-windows-msvc:
     runs-on: windows-2019
-    needs: make-release
+    needs: makerelease
     steps:
       - uses: actions/checkout@v1
         # this runs vcvarsall for us, so we get the MSVC toolchain in PATH.
@@ -66,7 +68,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ make-release.steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.makerelease.outputs.upload_url }}
           asset_path: win64.zip
           asset_name: win64-${{ github.sha }}.zip
           asset_content_type: application/zip
