@@ -5,24 +5,45 @@
 
 bool check_win_on_insert(P4_Game* game, int col, int row);
 
-void init_board(P4_Game* game) {
+void init_game(P4_Game* game) {
     for (int i = 0; i < BOARD_NC; i++) {
         for (int j = 0; j < BOARD_NR; j++) {
             game->board[i][j].p = NONE;
+            game->board[i][j].winning_move = false;
         }
     }
     game->active = RED;
     game->winner = NONE;
 }
 
+void reset_game(P4_Game* game) {
+    init_game(game);
+}
+
+bool is_won(P4_Game game) {
+    return game.winner != NONE;
+}
+
+CASE_COLOR get_game_winner(P4_Game game) {
+    assert(is_won(game));
+
+    return game.winner;
+}
+
+CASE_COLOR get_game_active(P4_Game game) {
+    assert(! is_won(game));
+
+    return game.active;
+}
+
 bool change_case_color(P4_Game* game, int col, int row, CASE_COLOR color) {
     assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
     assert(row >= 0 && row < BOARD_NR);
-    
+
     P4_Case* bcase = &(game->board[col][row]);
     bool changed = false;
-    
+
     if (bcase->p == NONE) {
         bcase->p = color;
         changed = true;
@@ -35,7 +56,7 @@ bool change_case_color(P4_Game* game, int col, int row, CASE_COLOR color) {
 int find_first_available_position_in_col(P4_Game* game, int col) {
     assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
-    
+
     int pos = -1;
     P4_Case* r_case = game->board[col];
     
@@ -51,7 +72,7 @@ int find_first_available_position_in_col(P4_Game* game, int col) {
 bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
     assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
-    
+
     bool inserted = false;
     int row = find_first_available_position_in_col(game, col);
     if (row < 0) {
@@ -66,7 +87,7 @@ bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
         printf("win: %d\n", win);
         inserted = true;
     }
-    
+
     return inserted;
 }
 
@@ -84,6 +105,14 @@ void game_switch(P4_Game* game) {
     }
 }
 
+void set_winning_point(P4_Game* game, int col, int row) {
+    assert(game != NULL);
+    assert(col >= 0 && col < BOARD_NC);
+    assert(row >= 0 && row < BOARD_NR);
+
+    game->board[col][row].winning_move = true;
+}
+
 bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
@@ -92,9 +121,9 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     assert(vrow >= -1 && vrow <= 1);
     assert(! (vrow == 0 && !(vcol != 0)));
     assert(! (vcol == 0 && !(vrow != 0)));
-    
+
     printf("CHECK %d %d\n", vcol, vrow);
-        
+
     bool ret = false;
     bool hope = true;
     bool inv = false;
@@ -102,11 +131,14 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     int ncol = col;
     int nrow = row;
 
-    
+    struct Point winning_points[WIN_CONDITION];
+
     CASE_COLOR color = game->board[col][row].p;
     CASE_COLOR ncolor;
     printf("\tstart %d %d\n", col, row);
-    while (hope && acc < 4) {
+    winning_points[acc - 1].x = col;
+    winning_points[acc - 1].y = row;
+    while (hope && acc < WIN_CONDITION) {
         ncol = ncol + (vcol * (inv ? -1 : 1));
         nrow = nrow + (vrow * (inv ? -1 : 1));                    
 
@@ -128,9 +160,9 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
         }
 
         //assert(col != ncol && row != nrow);
-        
+
         ncolor = game->board[ncol][nrow].p;
-        
+
         // Color check, if the color matches, continue the chain.
         // Otherwise if we did not already reverse the vector, we
         // reverse it, if no more piece of the right color can be
@@ -138,6 +170,8 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
         if (ncolor == color) {
             acc = acc + 1;
             printf("\tvalidate %d, %d \n", ncol, nrow);
+            winning_points[acc - 1].x = ncol;
+            winning_points[acc - 1].y = nrow;
         } else {
               if (! inv) {
                   printf("\t inv col<>\n");
@@ -151,10 +185,14 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
         }
     }
     printf("acc: %d\n\n", acc);
-    if (acc == 4) {
+    if (acc == WIN_CONDITION) {
         ret = true;
+
+        for (int i = 0; i < WIN_CONDITION; i++) {
+            set_winning_point(game, winning_points[i].x, winning_points[i].y);
+        }
     }
-    
+
     return ret;
 }
 
@@ -162,11 +200,18 @@ bool check_win_on_insert(P4_Game* game, int col, int row) {
     assert(game != NULL);
     assert(col >= 0 && col < BOARD_NC);
     assert(row >= 0 && row < BOARD_NR);
-    
-    return check_chain(game, col, row,  0, -1) ||
-           check_chain(game, col, row,  1,  0) ||
-           check_chain(game, col, row, -1, -1) ||
-           check_chain(game, col, row,  1, -1);
+
+    bool ret = check_chain(game, col, row,  0, -1) ||
+               check_chain(game, col, row,  1,  0) ||
+               check_chain(game, col, row, -1, -1) ||
+               check_chain(game, col, row,  1, -1);
+    // if one winning chain is found, recheck to colour others
+    if (ret) {
+        check_chain(game, col, row,  1,  0);
+        check_chain(game, col, row, -1, -1);
+        check_chain(game, col, row,  1, -1);
+    }
+    return ret;
 }
 
 char repr_color(CASE_COLOR color) {

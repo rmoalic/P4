@@ -69,6 +69,20 @@ void p4_display_board(SDL_Renderer* ren, P4_Game game) {
 
             SDL_SetRenderDrawColor(ren, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(ren, &r);
+            
+            if (is_won(game) && game.board[i][j].winning_move) {
+                const int margin = 10;
+                SDL_SetRenderDrawColor(ren, 0, 255, 0, 200);
+                r.x = r.x + margin;
+                r.y = r.y + margin;
+                r.w = r.w - margin * 2;
+                r.h = r.h - margin * 2;
+                
+                SDL_RenderFillRect(ren, &r);
+                
+                r.w = r.w + margin * 2;
+                r.h = r.h + margin * 2;
+            }
 
             pos_w = pos_w + R_W + R_MARGIN;
         }
@@ -101,24 +115,27 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     
     int x = R_MARGIN;
     int y = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;;
-    if (game.active == RED) {
-        snprintf(text, 19, "Red turn");
-    } else if (game.active == YELLOW) {
-        snprintf(text, 19, "Yellow turn");
-    } else {
-        snprintf(text, 19, "ERROR");
-    }
-    
-    render_text(ren, font, text, x, y, p4_repr(game.active));
 
-    if (game.winner != NONE) {
-        y = y + 25 + R_MARGIN;
-        if (game.winner == RED) {
+
+    if (is_won(game)) {
+        CASE_COLOR winner = get_game_winner(game);
+        if (winner == RED) {
             snprintf(text, 19, "Red WINS !");
-        } else if (game.winner == YELLOW) {
+        } else if (winner == YELLOW) {
             snprintf(text, 19, "Yellow WINS !");
         }
         render_text(ren, font, text, x, y, p4_repr(game.winner));
+    } else {
+        CASE_COLOR active = get_game_active(game);
+        if (active == RED) {
+            snprintf(text, 19, "Red turn");
+        } else if (active == YELLOW) {
+            snprintf(text, 19, "Yellow turn");
+        } else {
+            snprintf(text, 19, "ERROR");
+        }
+        
+        render_text(ren, font, text, x, y, p4_repr(game.active));
     }
 
 }
@@ -139,6 +156,7 @@ void p4_init_col_rect(P4_Columns* columns) {
 void onHover(SDL_Event input, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     //printf("point %d %d\n", p.x, p.y);
+
     for (int i = 0; i < BOARD_NC; i++) {
         SDL_Rect r = columns->c[i].c;
         if (SDL_PointInRect(&p, &r)) {
@@ -152,12 +170,16 @@ void onHover(SDL_Event input, P4_Columns* columns) {
 void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     for (int i = 0; i < BOARD_NC; i++) {
-        SDL_Rect r = columns->c[i].c;
-        if (SDL_PointInRect(&p, &r)) {
-            if (insert_in_col(game, i)) {
-                game_switch(game);
+        if (! is_won(*game)) {
+            SDL_Rect r = columns->c[i].c;
+            if (SDL_PointInRect(&p, &r)) {
+                if (insert_in_col(game, i)) {
+                    game_switch(game);
+                }
+                break;
             }
-            break;
+        } else {
+            reset_game(game);
         }
     }
 }
@@ -199,7 +221,7 @@ int main() {
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
     p4_init_col_rect(&columns);
-    init_board(&game);
+    init_game(&game);
     game.active = RED; // RED begins
 
     while (! quit) {        
