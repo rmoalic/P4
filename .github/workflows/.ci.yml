@@ -12,9 +12,13 @@ jobs:
           sudo apt-get install make clang libsdl2-dev libsdl2-ttf-dev 
       - name: build all and examples
         run: |
-          make
+          make dist
         env:
           CC: clang
+      - uses: actions/upload-artifact@v2
+        with:
+            name: build-linux
+            path: out/
   build-windows-msvc:
     runs-on: windows-2019
     steps:
@@ -34,3 +38,7 @@ jobs:
         # this replaces default PowerShell, which can't fail the build
         run: |
           build_msvc.bat
+      - uses: actions/upload-artifact@v2
+        with:
+            name: build-windows
+            path: out/

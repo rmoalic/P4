@@ -7,6 +7,11 @@ all: bin
 
 bin: main
 
+dist: bin
+	mkdir out
+	cp main out/
+	cp *.ttf out/
+
 main: main.c p4.c p4.h
 	$(CC) $(CFLAGS) $(LDFLAGS) main.c p4.c -o $@
 
