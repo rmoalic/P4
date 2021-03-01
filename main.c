@@ -141,9 +141,9 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
         if (is_won(game)) {
             CASE_COLOR winner = get_game_winner(game);
             if (winner == RED) {
-                snprintf(text, 19, "Red WINS !");
+                snprintf(text, 19, "Red WON !");
             } else if (winner == YELLOW) {
-                snprintf(text, 19, "Yellow WINS !");
+                snprintf(text, 19, "Yellow WON !");
             }
             render_text(ren, font, text, x, y, p4_repr(game.winner));
         } else {
@@ -153,9 +153,9 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     } else {
         CASE_COLOR active = get_game_active(game);
         if (active == RED) {
-            snprintf(text, 19, "Red turn");
+            snprintf(text, 19, "Red's turn");
         } else if (active == YELLOW) {
-            snprintf(text, 19, "Yellow turn");
+            snprintf(text, 19, "Yellow's turn");
         } else {
             snprintf(text, 19, "ERROR");
         }
