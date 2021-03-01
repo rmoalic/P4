@@ -13,12 +13,29 @@ jobs:
       - name: build all and examples
         run: |
           make dist
+          7z a linux64.zip out
         env:
           CC: clang
-      - uses: actions/upload-artifact@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-            name: build-linux
-            path: out/
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: true
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: linux64.zip
+          asset_name: linux64-${{ github.ref }}.zip
+          asset_content_type: application/zip
   build-windows-msvc:
     runs-on: windows-2019
     steps:
@@ -38,7 +55,24 @@ jobs:
         # this replaces default PowerShell, which can't fail the build
         run: |
           build_msvc.bat
-      - uses: actions/upload-artifact@v2
+          7z a win64.zip out
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-            name: build-windows
-            path: out/
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: true
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: win64.zip
+          asset_name: win64-${{ github.ref }}.zip
+          asset_content_type: application/zip
