@@ -2,6 +2,19 @@ name: CI
 on: [push, pull_request]
 
 jobs:
+  make-release:
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: true
+
   build-linux-clang:
     runs-on: ubuntu-latest
     steps:
@@ -16,25 +29,15 @@ jobs:
           7z a linux64.zip out
         env:
           CC: clang
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: true
       - name: Upload Release Asset
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ make-release.steps.create_release.outputs.upload_url }}
           asset_path: linux64.zip
-          asset_name: linux64-${{ github.ref }}.zip
+          asset_name: linux64-${{ github.sha }}.zip
           asset_content_type: application/zip
   build-windows-msvc:
     runs-on: windows-2019
@@ -51,28 +54,16 @@ jobs:
           7z x SDL2_ttf-VC.zip
           mv SDL2_ttf-2.0.15 SDL2_ttf
       - name: build all and examples
-        shell: cmd
-        # this replaces default PowerShell, which can't fail the build
         run: |
-          build_msvc.bat
+          ./build_msvc.bat
           7z a win64.zip out
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: true
       - name: Upload Release Asset
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ make-release.steps.create_release.outputs.upload_url }}
           asset_path: win64.zip
-          asset_name: win64-${{ github.ref }}.zip
+          asset_name: win64-${{ github.sha }}.zip
           asset_content_type: application/zip
