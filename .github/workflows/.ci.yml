@@ -27,7 +27,7 @@ jobs:
           7z x SDL2-devel-VC.zip
           mv SDL2-2.0.14 SDL2
           curl -fsSL -o SDL2_ttf-VC.zip https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-devel-2.0.15-VC.zip
-          7z x SDL2_ttf--VC.zip
+          7z x SDL2_ttf-VC.zip
           mv SDL2_ttf-2.0.15 SDL2_ttf
       - name: build all and examples
         shell: cmd
