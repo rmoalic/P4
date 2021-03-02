@@ -3,13 +3,22 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+
+#ifdef _MSC_VER
+#include <malloc.h>
+#define alloca _alloca
+#else
+#include <alloca.h>
+#endif
+
 #include "p4.h"
 
 bool check_win_on_insert(P4_Game* game, int col, int row);
 void reset_game(P4_Game* game);
 
-P4_Game* init_game(int ncol, int nrow) {
-    P4_Game tmp = {.size = {ncol, nrow}};
+P4_Game* init_game(int ncol, int nrow, int win_condition) {
+    P4_Game tmp = {.size = {ncol, nrow}, 
+                   .win_condition = win_condition};
     P4_Game* game = malloc(sizeof(P4_Game));
     memcpy(game, &tmp, sizeof(P4_Game));
 
@@ -164,14 +173,14 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     int ncol = col;
     int nrow = row;
 
-    struct Point winning_points[WIN_CONDITION];
+    struct Point* winning_points = alloca(game->win_condition * sizeof(struct Point));
 
     CASE_COLOR color = game->board[col][row].p;
     CASE_COLOR ncolor;
     printf("\tstart %d %d\n", col, row);
     winning_points[acc - 1].x = col;
     winning_points[acc - 1].y = row;
-    while (hope && acc < WIN_CONDITION) {
+    while (hope && acc < game->win_condition) {
         ncol = ncol + (vcol * (inv ? -1 : 1));
         nrow = nrow + (vrow * (inv ? -1 : 1));                    
 
@@ -218,10 +227,10 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
         }
     }
     printf("acc: %d\n\n", acc);
-    if (acc == WIN_CONDITION) {
+    if (acc == game->win_condition) {
         ret = true;
 
-        for (int i = 0; i < WIN_CONDITION; i++) {
+        for (int i = 0; i < game->win_condition; i++) {
             set_winning_point(game, winning_points[i].x, winning_points[i].y);
         }
     }

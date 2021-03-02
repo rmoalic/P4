@@ -222,9 +222,10 @@ void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
 int main(int argc, char* argv[]) {
     int ncol;
     int nrow;
+    int win_condition;
     
     if (argc > 1) {
-        if (argc == 3) {          
+        if (argc == 4) {          
             errno = 0;
             ncol = strtol(argv[1], NULL, 10);
             if (errno != 0) {
@@ -237,17 +238,24 @@ int main(int argc, char* argv[]) {
                 perror("strtol");
                 return EXIT_FAILURE;
             }
-            if (ncol < 1 || nrow < 1) {
-                fprintf(stderr, "ncol and nrow must be supperior to 1\n");
+            errno = 0;
+            win_condition = strtol(argv[3], NULL, 10);
+            if (errno != 0) {
+                perror("strtol");
+                return EXIT_FAILURE;
+            }
+            if (ncol < 1 || nrow < 1 || win_condition < 1) {
+                fprintf(stderr, "ncol, nrow and win_condition must be supperior to 1\n");
                 return EXIT_FAILURE;  
             }
         } else {
-            fprintf(stderr, "USAGE: %s ncol nrow\n", argv[0]);
+            fprintf(stderr, "USAGE: %s ncol nrow win_condition\n", argv[0]);
             return EXIT_FAILURE;
         }
     } else {
         ncol = 7;
         nrow = 6;
+        win_condition = 4;
     }
 
     const int window_width = ncol * (R_W + R_MARGIN) + R_MARGIN;
@@ -287,7 +295,7 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
-    game = init_game(ncol, nrow);
+    game = init_game(ncol, nrow, win_condition);
     columns = p4_init_col(ncol);
 
     while (! quit) {        
