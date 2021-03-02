@@ -165,17 +165,17 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
 
 }
 
-P4_Columns* p4_init_col(int nb) {
+P4_Columns* p4_init_col(P4_Game game) {
     P4_Columns* columns = malloc(sizeof(P4_Columns));
-    columns->c = malloc(nb * sizeof(struct p4_column));
-    columns->nb = nb;
+    columns->c = malloc(game.size.ncol * sizeof(struct p4_column));
+    columns->nb = game.size.ncol;
     
     SDL_Rect r;
     r.y = R_MARGIN;
     r.w = R_W;
-    r.h = nb * (R_W + R_MARGIN) - R_MARGIN;
+    r.h = game.size.nrow * (R_W + R_MARGIN) - R_MARGIN;
 
-    for (int i = 0; i < nb; i++) {
+    for (int i = 0; i < game.size.ncol; i++) {
         r.x = i * (R_W + R_MARGIN) + R_MARGIN;
         columns->c[i].c = r;
         columns->c[i].hover = false;
@@ -296,7 +296,7 @@ int main(int argc, char* argv[]) {
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
     game = init_game(ncol, nrow, win_condition);
-    columns = p4_init_col(ncol);
+    columns = p4_init_col(*game);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
