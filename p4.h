@@ -2,8 +2,6 @@
 #ifndef include_p4
 #define include_p4 1
 
-#define BOARD_NR 6
-#define BOARD_NC 7
 #define WIN_CONDITION 4
 
 typedef enum CaseColor {
@@ -22,16 +20,24 @@ struct Point {
     int y;
 };
 
+typedef struct p4_board_size {
+    const int ncol;
+    const int nrow;
+} P4_Board_Size;
+
 typedef struct p4_game {
-    P4_Case board[BOARD_NC][BOARD_NR];
+    const struct p4_board_size size;
+    P4_Case** board;
     CASE_COLOR active;
     CASE_COLOR winner;
     int remaining_pieces;
 } P4_Game;
 
-void init_game(P4_Game* game);
+P4_Game* init_game(int ncol, int nrow);
 
 void reset_game(P4_Game* game);
+
+void free_game(P4_Game* game);
 
 bool is_finished(P4_Game game);
 
@@ -40,6 +46,8 @@ bool is_won(P4_Game game);
 CASE_COLOR get_game_winner(P4_Game game);
 
 CASE_COLOR get_game_active(P4_Game game);
+
+P4_Board_Size get_game_size(P4_Game game);
 
 bool insert_in_col(P4_Game* game, int col);
 

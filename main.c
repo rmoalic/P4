@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <errno.h>
 
 #ifdef _MSC_VER
 #include <SDL.h>
@@ -18,8 +19,6 @@
 #define R_W 50
 #define R_MARGIN 10
 
-const int WIDTH  = BOARD_NC * (R_W + R_MARGIN) + R_MARGIN;
-const int HEIGHT = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN * 2 + 25;
 
 struct p4_column {
     bool hover;
@@ -27,7 +26,8 @@ struct p4_column {
 };
 
 typedef struct p4_columns {
-    struct p4_column c[BOARD_NC];
+    struct p4_column* c;
+    int nb;
 } P4_Columns;
 
 SDL_Color p4_repr(CASE_COLOR color) {
@@ -60,12 +60,12 @@ SDL_Color p4_repr(CASE_COLOR color) {
 }
 // 0279c2
 
-void p4_render_background(SDL_Renderer* ren) {
+void p4_render_background(SDL_Renderer* ren, int ncol, int nrow) {
     SDL_Rect r;
     r.x = 0;
     r.y = 0;
-    r.h = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;
-    r.w = BOARD_NC * (R_W + R_MARGIN) + R_MARGIN;
+    r.h = nrow * (R_W + R_MARGIN) + R_MARGIN;
+    r.w = ncol * (R_W + R_MARGIN) + R_MARGIN;
     SDL_SetRenderDrawColor(ren, 2, 121, 194, 255);
     SDL_RenderFillRect(ren, &r);
 }
@@ -78,10 +78,10 @@ void p4_display_board(SDL_Renderer* ren, P4_Game game) {
     int pos_w = R_MARGIN;
     int pos_h = R_MARGIN;
     
-    p4_render_background(ren);
+    p4_render_background(ren, game.size.ncol, game.size.nrow);
 
-    for (int j = BOARD_NR-1; j >= 0; j--) {
-        for (int i = 0; i < BOARD_NC; i++) {
+    for (int j = game.size.nrow - 1; j >= 0; j--) {
+        for (int i = 0; i < game.size.ncol; i++) {
             r.x = pos_w;
             r.y = pos_h;
             
@@ -113,7 +113,7 @@ void p4_display_board(SDL_Renderer* ren, P4_Game game) {
 
 void p4_display_columns(SDL_Renderer* ren, P4_Columns columns) {
     SDL_SetRenderDrawColor(ren, 0, 0, 255, 50);
-    for (int i = 0; i < BOARD_NC; i++) {
+    for (int i = 0; i < columns.nb; i++) {
         if (columns.c[i].hover) {
             SDL_RenderFillRect(ren, &(columns.c[i].c));            
         }
@@ -134,7 +134,7 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     char text[20];
     
     int x = R_MARGIN;
-    int y = BOARD_NR * (R_W + R_MARGIN) + R_MARGIN;
+    int y = game.size.nrow * (R_W + R_MARGIN) + R_MARGIN;
 
 
     if (is_finished(game)) {
@@ -165,24 +165,34 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
 
 }
 
-void p4_init_col_rect(P4_Columns* columns) {
+P4_Columns* p4_init_col(int nb) {
+    P4_Columns* columns = malloc(sizeof(P4_Columns));
+    columns->c = malloc(nb * sizeof(struct p4_column));
+    columns->nb = nb;
+    
     SDL_Rect r;
     r.y = R_MARGIN;
     r.w = R_W;
-    r.h = BOARD_NR * (R_W + R_MARGIN) - R_MARGIN;
+    r.h = nb * (R_W + R_MARGIN) - R_MARGIN;
 
-    for (int i = 0; i < BOARD_NC; i++) {
+    for (int i = 0; i < nb; i++) {
         r.x = i * (R_W + R_MARGIN) + R_MARGIN;
         columns->c[i].c = r;
         columns->c[i].hover = false;
     }
+    return columns;
+}
+
+void p4_free_col(P4_Columns* columns) {
+        free(columns->c);
+        free(columns);
 }
 
 void onHover(SDL_Event input, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     //printf("point %d %d\n", p.x, p.y);
 
-    for (int i = 0; i < BOARD_NC; i++) {
+    for (int i = 0; i < columns->nb; i++) {
         SDL_Rect r = columns->c[i].c;
         if (SDL_PointInRect(&p, &r)) {
             columns->c[i].hover = true;
@@ -194,7 +204,7 @@ void onHover(SDL_Event input, P4_Columns* columns) {
 
 void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
-    for (int i = 0; i < BOARD_NC; i++) {
+    for (int i = 0; i < columns->nb; i++) {
         if (! is_finished(*game)) {
             SDL_Rect r = columns->c[i].c;
             if (SDL_PointInRect(&p, &r)) {
@@ -210,12 +220,44 @@ void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
 }
 
 int main(int argc, char* argv[]) {
+    int ncol;
+    int nrow;
+    
+    if (argc > 1) {
+        if (argc == 3) {          
+            errno = 0;
+            ncol = strtol(argv[1], NULL, 10);
+            if (errno != 0) {
+                perror("strtol");
+                return EXIT_FAILURE;
+            }
+            errno = 0;
+            nrow = strtol(argv[2], NULL, 10);
+            if (errno != 0) {
+                perror("strtol");
+                return EXIT_FAILURE;
+            }
+            if (ncol < 1 || nrow < 1) {
+                fprintf(stderr, "ncol and nrow must be supperior to 1\n");
+                return EXIT_FAILURE;  
+            }
+        } else {
+            fprintf(stderr, "USAGE: %s ncol nrow\n", argv[0]);
+            return EXIT_FAILURE;
+        }
+    } else {
+        ncol = 7;
+        nrow = 6;
+    }
+
+    const int window_width = ncol * (R_W + R_MARGIN) + R_MARGIN;
+    const int window_height = nrow * (R_W + R_MARGIN) + R_MARGIN * 2 + 25;
     SDL_Window *win = 0;
     SDL_Renderer *ren = 0;
     SDL_Event input;
     
-    P4_Game game;
-    P4_Columns columns;
+    P4_Game* game;
+    P4_Columns* columns;
     
     bool quit = false;
 
@@ -227,7 +269,7 @@ int main(int argc, char* argv[]) {
     atexit(SDL_Quit);
 
     int flags = 0;
-    SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, flags, &win, &ren);
+    SDL_CreateWindowAndRenderer(window_width, window_height, flags, &win, &ren);
 
     if (!win || !ren)
     {
@@ -245,9 +287,8 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
-    p4_init_col_rect(&columns);
-    init_game(&game);
-    game.active = RED; // RED begins
+    game = init_game(ncol, nrow);
+    columns = p4_init_col(ncol);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
@@ -256,10 +297,10 @@ int main(int argc, char* argv[]) {
                 quit = true;
             } break;
             case SDL_MOUSEMOTION: {
-                onHover(input, &columns);
+                onHover(input, columns);
             } break;
             case SDL_MOUSEBUTTONDOWN: {
-                onClick(input, &game, &columns);
+                onClick(input, game, columns);
             } break;
             default: {
             }
@@ -269,9 +310,9 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
         SDL_RenderClear(ren);
 
-        p4_display_board(ren, game);
-        p4_display_columns(ren, columns);
-        p4_display_game_info(ren, font, game);
+        p4_display_board(ren, *game);
+        p4_display_columns(ren, *columns);
+        p4_display_game_info(ren, font, *game);
         
 
         
@@ -279,6 +320,8 @@ int main(int argc, char* argv[]) {
         SDL_Delay(50);
     }
     
+    p4_free_col(columns);
+    free_game(game);
     TTF_CloseFont(font);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
