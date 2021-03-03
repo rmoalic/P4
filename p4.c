@@ -4,13 +4,6 @@
 #include <string.h>
 #include <assert.h>
 
-#ifdef _MSC_VER
-#include <malloc.h>
-#define alloca _alloca
-#else
-#include <alloca.h>
-#endif
-
 #include "p4.h"
 
 static bool check_win_on_insert(P4_Game* game, int col, int row);
@@ -154,7 +147,17 @@ static void set_winning_point(P4_Game* game, int col, int row) {
     game->board[col][row].winning_move = true;
 }
 
-static bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
+static void set_winning_chain(P4_Game* game, struct Point* chain, int size) {
+    assert(game != NULL);
+    assert(chain != NULL);
+    assert(size >= 0);
+
+    for (int i = 0; i < size; i++) {
+        set_winning_point(game, chain[i].x, chain[i].y);
+    }
+}
+
+static struct Point* find_chain(P4_Game* game, int col, int row, int vcol, int vrow, int size) {
     assert(game != NULL);
     assert(col >= 0 && col < game->size.ncol);
     assert(row >= 0 && row < game->size.nrow);
@@ -162,24 +165,24 @@ static bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     assert(vrow >= -1 && vrow <= 1);
     assert(! (vrow == 0 && !(vcol != 0)));
     assert(! (vcol == 0 && !(vrow != 0)));
+    assert(size >= 0);
 
     printf("CHECK %d %d\n", vcol, vrow);
 
-    bool ret = false;
     bool hope = true;
     bool inv = false;
     int acc = 1;
     int ncol = col;
     int nrow = row;
 
-    struct Point* winning_points = alloca(game->win_condition * sizeof(struct Point));
+    struct Point* winning_points = malloc(size * sizeof(struct Point));
 
     CASE_COLOR color = game->board[col][row].p;
     CASE_COLOR ncolor;
     printf("\tstart %d %d\n", col, row);
     winning_points[acc - 1].x = col;
     winning_points[acc - 1].y = row;
-    while (hope && acc < game->win_condition) {
+    while (hope && acc < size) {
         ncol = ncol + (vcol * (inv ? -1 : 1));
         nrow = nrow + (vrow * (inv ? -1 : 1));                    
 
@@ -221,20 +224,30 @@ static bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
                   nrow = row;
               } else {
                   hope = false;
-                  ret = false;
               }
         }
     }
     printf("acc: %d\n\n", acc);
-    if (acc == game->win_condition) {
-        ret = true;
 
-        for (int i = 0; i < game->win_condition; i++) {
-            set_winning_point(game, winning_points[i].x, winning_points[i].y);
-        }
+    if (acc != size) {
+        free(winning_points);
+        winning_points = NULL;
     }
 
-    return ret;
+    return winning_points;
+}
+
+static bool find_and_tag_chain(P4_Game* game, int col, int row, int vcol, int vrow, int size) {
+    struct Point* chain = NULL;
+    bool found = false;
+
+    chain = find_chain(game, col, row,  vcol, vrow, size);
+    if (chain != NULL) {
+        found = true;
+        set_winning_chain(game, chain, size);
+        free(chain);
+    }
+    return found;
 }
 
 static bool check_win_on_insert(P4_Game* game, int col, int row) {
@@ -242,17 +255,15 @@ static bool check_win_on_insert(P4_Game* game, int col, int row) {
     assert(col >= 0 && col < game->size.ncol);
     assert(row >= 0 && row < game->size.nrow);
 
-    bool ret = check_chain(game, col, row,  0, -1) ||
-               check_chain(game, col, row,  1,  0) ||
-               check_chain(game, col, row, -1, -1) ||
-               check_chain(game, col, row,  1, -1);
-    // if one winning chain is found, recheck to colour others
-    if (ret) {
-        check_chain(game, col, row,  1,  0);
-        check_chain(game, col, row, -1, -1);
-        check_chain(game, col, row,  1, -1);
-    }
-    return ret;
+    int size = game->win_condition;
+    bool found = false;
+
+    found |= find_and_tag_chain(game, col, row,  0, -1, size);
+    found |= find_and_tag_chain(game, col, row,  1,  0, size);
+    found |= find_and_tag_chain(game, col, row, -1, -1, size);
+    found |= find_and_tag_chain(game, col, row,  1, -1, size);
+
+    return found;
 }
 
 char repr_color(CASE_COLOR color) {
