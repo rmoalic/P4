@@ -3,7 +3,7 @@
 #define include_p4 1
 
 typedef enum CaseColor {
-    NONE,
+    NONE = 0,
     RED,
     YELLOW
 } CASE_COLOR;
@@ -24,9 +24,9 @@ typedef struct p4_board_size {
 } P4_Board_Size;
 
 typedef struct p4_game {
+    P4_Case** board;
     const struct p4_board_size size;
     const int win_condition;
-    P4_Case** board;
     CASE_COLOR active;
     CASE_COLOR winner;
     int remaining_pieces;
@@ -51,6 +51,8 @@ P4_Board_Size get_game_size(P4_Game game);
 bool insert_in_col(P4_Game* game, int col);
 
 void game_switch(P4_Game* game);
+
+char repr_color(CASE_COLOR color);
 
 void debug_print_board(P4_Game game);
 

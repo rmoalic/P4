@@ -24,7 +24,7 @@ typedef struct p4_columns {
     int nb;
 } P4_Columns;
 
-SDL_Color p4_repr(CASE_COLOR color) {
+static SDL_Color p4_repr(CASE_COLOR color) {
     SDL_Color c;
     c.a = 255;
     switch (color){
@@ -52,9 +52,8 @@ SDL_Color p4_repr(CASE_COLOR color) {
     }
     return c;
 }
-// 0279c2
 
-void p4_render_background(SDL_Renderer* ren, int ncol, int nrow) {
+static void p4_render_background(SDL_Renderer* ren, int ncol, int nrow) {
     SDL_Rect r;
     r.x = 0;
     r.y = 0;
@@ -64,13 +63,14 @@ void p4_render_background(SDL_Renderer* ren, int ncol, int nrow) {
     SDL_RenderFillRect(ren, &r);
 }
 
-void p4_display_board(SDL_Renderer* ren, P4_Game game) {
+static void p4_display_board(SDL_Renderer* ren, P4_Game game) {
     SDL_Rect r;
     r.w = R_W;
     r.h = R_W;
     
     int pos_w = R_MARGIN;
     int pos_h = R_MARGIN;
+    bool won = is_won(game);
     
     p4_render_background(ren, game.size.ncol, game.size.nrow);
 
@@ -84,7 +84,7 @@ void p4_display_board(SDL_Renderer* ren, P4_Game game) {
             SDL_SetRenderDrawColor(ren, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(ren, &r);
             
-            if (is_won(game) && game.board[i][j].winning_move) {
+            if (won && game.board[i][j].winning_move) {
                 const int margin = 10;
                 SDL_SetRenderDrawColor(ren, 0, 255, 0, 200);
                 r.x = r.x + margin;
@@ -105,7 +105,7 @@ void p4_display_board(SDL_Renderer* ren, P4_Game game) {
     }
 }
 
-void p4_display_columns(SDL_Renderer* ren, P4_Columns columns) {
+static void p4_display_columns(SDL_Renderer* ren, P4_Columns columns) {
     SDL_SetRenderDrawColor(ren, 0, 0, 255, 50);
     for (int i = 0; i < columns.nb; i++) {
         if (columns.c[i].hover) {
@@ -115,7 +115,7 @@ void p4_display_columns(SDL_Renderer* ren, P4_Columns columns) {
 }
 
 //TODO: prebake the textures
-void render_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int x, int y, SDL_Color color) {
+static void render_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int x, int y, SDL_Color color) {
     SDL_Surface* surface = TTF_RenderText_Solid(font, text, color);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(ren, surface);
     SDL_Rect r = {x, y, surface->w, surface->h};
@@ -124,7 +124,7 @@ void render_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int x, int
     SDL_FreeSurface(surface);
 }
 
-void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
+static void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     char text[20];
     
     int x = R_MARGIN;
@@ -159,7 +159,7 @@ void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
 
 }
 
-P4_Columns* p4_init_col(P4_Game game) {
+static P4_Columns* p4_init_col(P4_Game game) {
     P4_Columns* columns = malloc(sizeof(P4_Columns));
     columns->c = malloc(game.size.ncol * sizeof(struct p4_column));
     columns->nb = game.size.ncol;
@@ -177,12 +177,12 @@ P4_Columns* p4_init_col(P4_Game game) {
     return columns;
 }
 
-void p4_free_col(P4_Columns* columns) {
+static void p4_free_col(P4_Columns* columns) {
         free(columns->c);
         free(columns);
 }
 
-void onHover(SDL_Event input, P4_Columns* columns) {
+static void onHover(SDL_Event input, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     //printf("point %d %d\n", p.x, p.y);
 
@@ -196,7 +196,7 @@ void onHover(SDL_Event input, P4_Columns* columns) {
     }
 }
 
-void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
+static void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     for (int i = 0; i < columns->nb; i++) {
         if (! is_finished(*game)) {

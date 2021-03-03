@@ -13,8 +13,7 @@
 
 #include "p4.h"
 
-bool check_win_on_insert(P4_Game* game, int col, int row);
-void reset_game(P4_Game* game);
+static bool check_win_on_insert(P4_Game* game, int col, int row);
 
 P4_Game* init_game(int ncol, int nrow, int win_condition) {
     P4_Game tmp = {.size = {ncol, nrow}, 
@@ -76,7 +75,7 @@ P4_Board_Size get_game_size(P4_Game game) {
     return game.size;
 }
 
-bool change_case_color(P4_Game* game, int col, int row, CASE_COLOR color) {
+static bool change_case_color(P4_Game* game, int col, int row, CASE_COLOR color) {
     assert(game != NULL);
     assert(col >= 0 && col < game->size.ncol);
     assert(row >= 0 && row < game->size.nrow);
@@ -93,7 +92,7 @@ bool change_case_color(P4_Game* game, int col, int row, CASE_COLOR color) {
     return changed;
 }
 
-int find_first_available_position_in_col(P4_Game* game, int col) {
+static int find_first_available_position_in_col(P4_Game* game, int col) {
     assert(game != NULL);
     assert(col >= 0 && col < game->size.ncol);
 
@@ -109,7 +108,7 @@ int find_first_available_position_in_col(P4_Game* game, int col) {
     return pos;
 }
 
-bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
+static bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
     assert(game != NULL);
     assert(game->remaining_pieces > 0);
     assert(col >= 0 && col < game->size.ncol);
@@ -147,7 +146,7 @@ void game_switch(P4_Game* game) {
     }
 }
 
-void set_winning_point(P4_Game* game, int col, int row) {
+static void set_winning_point(P4_Game* game, int col, int row) {
     assert(game != NULL);
     assert(col >= 0 && col < game->size.ncol);
     assert(row >= 0 && row < game->size.nrow);
@@ -155,7 +154,7 @@ void set_winning_point(P4_Game* game, int col, int row) {
     game->board[col][row].winning_move = true;
 }
 
-bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
+static bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     assert(game != NULL);
     assert(col >= 0 && col < game->size.ncol);
     assert(row >= 0 && row < game->size.nrow);
@@ -238,7 +237,7 @@ bool check_chain(P4_Game* game, int col, int row, int vcol, int vrow) {
     return ret;
 }
 
-bool check_win_on_insert(P4_Game* game, int col, int row) {
+static bool check_win_on_insert(P4_Game* game, int col, int row) {
     assert(game != NULL);
     assert(col >= 0 && col < game->size.ncol);
     assert(row >= 0 && row < game->size.nrow);
