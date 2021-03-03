@@ -9,6 +9,10 @@
 static bool check_win_on_insert(P4_Game* game, int col, int row);
 
 P4_Game* init_game(int ncol, int nrow, int win_condition) {
+    assert(ncol > 0);
+    assert(nrow > 0);
+    assert(win_condition > 0);
+
     P4_Game tmp = {.size = {ncol, nrow}, 
                    .win_condition = win_condition};
     P4_Game* game = malloc(sizeof(P4_Game));
@@ -25,6 +29,8 @@ P4_Game* init_game(int ncol, int nrow, int win_condition) {
 }
 
 void free_game(P4_Game* game) {
+    assert(game != NULL);
+
     for (int i = 0; i < game->size.ncol; i++) {
         free(game->board[i]);
     }
@@ -33,6 +39,8 @@ void free_game(P4_Game* game) {
 }
 
 void reset_game(P4_Game* game) {
+    assert(game != NULL);
+
     for (int i = 0; i < game->size.ncol; i++) {
         for (int j = 0; j < game->size.nrow; j++) {
             game->board[i][j].p = NONE;
@@ -130,6 +138,8 @@ bool insert_in_col(P4_Game* game, int col) {
 }
 
 void game_switch(P4_Game* game) {
+    assert(game != NULL);
+
     if (game->active == RED) {
         game->active = YELLOW;
     } else if (game->active == YELLOW) {
@@ -163,8 +173,8 @@ static struct Point* find_chain(P4_Game* game, int col, int row, int vcol, int v
     assert(row >= 0 && row < game->size.nrow);
     assert(vcol >= -1 && vcol <= 1);
     assert(vrow >= -1 && vrow <= 1);
-    assert(! (vrow == 0 && !(vcol != 0)));
-    assert(! (vcol == 0 && !(vrow != 0)));
+    assert(! (vrow == 0 && !(vcol != 0)) && "si vrow == 0 alors vcol != 0");
+    assert(! (vcol == 0 && !(vrow != 0)) && "si vcol == 0 alors vrow != 0");
     assert(size >= 0);
 
     printf("CHECK %d %d\n", vcol, vrow);
@@ -203,7 +213,7 @@ static struct Point* find_chain(P4_Game* game, int col, int row, int vcol, int v
             continue;
         }
 
-        //assert(col != ncol && row != nrow);
+        assert(! (col == ncol && row == nrow) && "Don't count the starting point twice");
 
         ncolor = game->board[ncol][nrow].p;
 
