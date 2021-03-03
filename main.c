@@ -188,9 +188,10 @@ void p4_free_col(P4_Columns* columns) {
         free(columns);
 }
 
-void onHover(SDL_Event input, P4_Columns* columns) {
+void onHover(SDL_Event input, P4_Columns* columns, float xx, float yy) {
     SDL_Point p = {input.motion.x, input.motion.y};
-    //printf("point %d %d\n", p.x, p.y);
+    p.x *= xx;
+    p.y *= yy;
 
     for (int i = 0; i < columns->nb; i++) {
         SDL_Rect r = columns->c[i].c;
@@ -202,8 +203,11 @@ void onHover(SDL_Event input, P4_Columns* columns) {
     }
 }
 
-void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
+void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns, float xx, float yy) {
     SDL_Point p = {input.motion.x, input.motion.y};
+    p.x *= xx;
+    p.y *= yy;
+
     for (int i = 0; i < columns->nb; i++) {
         if (! is_finished(*game)) {
             SDL_Rect r = columns->c[i].c;
@@ -257,9 +261,11 @@ int main(int argc, char* argv[]) {
         nrow = 6;
         win_condition = 4;
     }
+    const int width = ncol * (R_W + R_MARGIN) + R_MARGIN;
+    const int height = nrow * (R_W + R_MARGIN) + R_MARGIN + 25 + 2 * R_MARGIN;
 
-    const int window_width = ncol * (R_W + R_MARGIN) + R_MARGIN;
-    const int window_height = nrow * (R_W + R_MARGIN) + R_MARGIN * 2 + 25;
+    const int window_width = 500;
+    const int window_height = 500 + 25 + 2 * R_MARGIN;
     SDL_Window *win = 0;
     SDL_Renderer *ren = 0;
     SDL_Event input;
@@ -294,9 +300,14 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+    SDL_Texture* texture = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
+    SDL_Rect texture_r = {0, 0, window_width, window_height};
 
     game = init_game(ncol, nrow, win_condition);
     columns = p4_init_col(*game);
+
+    float crop_w = width / (window_width * 1.0);
+    float crop_h = height / (window_height * 1.0);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
@@ -305,10 +316,10 @@ int main(int argc, char* argv[]) {
                 quit = true;
             } break;
             case SDL_MOUSEMOTION: {
-                onHover(input, columns);
+                onHover(input, columns, crop_w, crop_h);
             } break;
             case SDL_MOUSEBUTTONDOWN: {
-                onClick(input, game, columns);
+                onClick(input, game, columns, crop_w, crop_h);
             } break;
             default: {
             }
@@ -317,12 +328,15 @@ int main(int argc, char* argv[]) {
         
         SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
         SDL_RenderClear(ren);
+        SDL_SetRenderTarget(ren, texture);
+        SDL_RenderClear(ren);
 
         p4_display_board(ren, *game);
         p4_display_columns(ren, *columns);
         p4_display_game_info(ren, font, *game);
         
-
+        SDL_SetRenderTarget(ren, NULL);
+        SDL_RenderCopy(ren, texture, NULL, &texture_r);
         
         SDL_RenderPresent(ren);
         SDL_Delay(50);
@@ -330,6 +344,7 @@ int main(int argc, char* argv[]) {
     
     p4_free_col(columns);
     free_game(game);
+    SDL_DestroyTexture(texture);
     TTF_CloseFont(font);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
