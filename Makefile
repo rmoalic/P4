@@ -1,6 +1,6 @@
 CC=clang
 LDFLAGS+=-lSDL2 -lSDL2_ttf
-CFLAGS+=-std=c11 -g -Wall -Wextra -pedantic
+CFLAGS+=-std=c11 -g -Wall -Wextra -pedantic -I/usr/include/SDL2
 #CFLAGS+=-O3 -Wall -Wextra -s -DNDEBUG -pedantic
 
 all: bin

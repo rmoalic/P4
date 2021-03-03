@@ -3,14 +3,8 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <errno.h>
-
-#ifdef _MSC_VER
 #include <SDL.h>
 #include <SDL_ttf.h>
-#else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>	
-#endif
 
 #include "p4.h"
 
