@@ -12,8 +12,11 @@ dist: bin
 	cp main out/
 	cp *.ttf out/
 
-main: main.c p4.c p4.h
-	$(CC) $(CFLAGS) $(LDFLAGS) main.c p4.c -o $@
+main: main.c p4.c p4.h layout.c list.o
+	$(CC) $(CFLAGS) $(LDFLAGS) main.c p4.c layout.c list.o -o $@
+
+list.o: list.c list.h
+	$(CC) $(CFLAGS) -c list.c
 
 clean:
 	rm main

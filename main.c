@@ -6,6 +6,7 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 
+#include "layout.h"
 #include "p4.h"
 
 //TODO: Use Surface for rendering the board
@@ -286,6 +287,11 @@ int main(int argc, char* argv[]) {
         fprintf(stderr,"Error while loading font: %s\n", TTF_GetError());
         return EXIT_FAILURE;
     }
+
+    Container c = {
+        .type = FLOW_LAYOUT,
+        .flow_layout = init_flow_layout()
+    };
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
