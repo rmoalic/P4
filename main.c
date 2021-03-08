@@ -199,16 +199,10 @@ static void onHover(SDL_Event input, P4_Columns* columns) {
 static void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
     for (int i = 0; i < columns->nb; i++) {
-        if (! is_finished(*game)) {
-            SDL_Rect r = columns->c[i].c;
-            if (SDL_PointInRect(&p, &r)) {
-                if (insert_in_col(game, i)) {
-                    game_switch(game);
-                }
-                break;
-            }
-        } else {
-            reset_game(game);
+        SDL_Rect r = columns->c[i].c;
+        if (SDL_PointInRect(&p, &r)) {
+            game_step(game, i);
+            break;
         }
     }
 }

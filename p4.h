@@ -48,9 +48,7 @@ CASE_COLOR get_game_active(P4_Game game);
 
 P4_Board_Size get_game_size(P4_Game game);
 
-bool insert_in_col(P4_Game* game, int col);
-
-void game_switch(P4_Game* game);
+void game_step(P4_Game* game, int col);
 
 char repr_color(CASE_COLOR color);
 

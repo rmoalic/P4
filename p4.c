@@ -133,11 +133,11 @@ static bool insert_in_col_impl(P4_Game* game, int col, CASE_COLOR color) {
     return inserted;
 }
 
-bool insert_in_col(P4_Game* game, int col) {
+static bool insert_in_col(P4_Game* game, int col) {
     return insert_in_col_impl(game, col, game->active);
 }
 
-void game_switch(P4_Game* game) {
+static void game_switch(P4_Game* game) {
     assert(game != NULL);
 
     if (game->active == RED) {
@@ -146,6 +146,16 @@ void game_switch(P4_Game* game) {
         game->active = RED;
     } else {
         assert(false);
+    }
+}
+
+void game_step(P4_Game* game, int col) {
+    if (! is_finished(*game)) {
+        if (insert_in_col(game, col)) {
+            game_switch(game);
+        }
+    } else {
+        reset_game(game);
     }
 }
 
