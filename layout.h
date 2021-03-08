@@ -28,14 +28,14 @@ typedef struct widget {
     void** custom;
     size_t custom_s;
     
-    void (*update)(struct widget*);
+    void (*update)(SDL_Renderer*, struct widget*);
     void (*capture_mouse_input)(SDL_Event, struct widget*);
     void (*capture_keyboard_input)(SDL_Event, struct widget*);
 } Widget;
 
 typedef struct flow_layout {
     Margin margin;
-    list* widgets;
+    list widgets;
 } FlowLayout;
 
 typedef enum container_type {
@@ -53,6 +53,7 @@ typedef struct container {
 
 Widget* init_widget(SDL_Texture* texture, struct size t_size, bool keep_ratio);
 FlowLayout* init_flow_layout();
-void draw_container(Container* c, SDL_Renderer* ren, int x, int y);
+void draw_container(Container c, SDL_Renderer* ren, int x, int y);
+void layout_add_widget(FlowLayout* layout, Widget* w);
 
 #endif

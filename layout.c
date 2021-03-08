@@ -22,29 +22,34 @@ FlowLayout* init_flow_layout() {
     ret->margin.left = 0;
     ret->margin.right = 0;
     ret->margin.top = 0;
-    list_init(ret->widgets);
+    list_init(&ret->widgets);
     
     return ret;
 }
 
 void layout_add_widget(FlowLayout* layout, Widget* w) {
-    list_append(layout->widgets, w, sizeof(Widget));
+    list_append(&layout->widgets, w, sizeof(Widget));
 }
 
 void draw_widget(Widget* widget, SDL_Renderer* ren, int x, int y) {
     SDL_Rect r;
-    widget->update(widget);
+    
+    SDL_SetRenderTarget(ren, widget->texture);
+    SDL_RenderClear(ren);
+    
+    widget->update(ren, widget);
 
     r.x = x;
     r.y = y;
     r.w = widget->texture_size.width;
     r.h = widget->texture_size.height;
 
+    SDL_SetRenderTarget(ren, NULL);
     SDL_RenderCopy(ren, widget->texture, NULL, &r);
 }
 
 void draw_layout(FlowLayout* layout, SDL_Renderer* ren, int x, int y) {
-    struct list_element* curr = *(layout->widgets);
+    struct list_element* curr = layout->widgets;
     int cx = x;
     int cy = y;
     
@@ -57,13 +62,13 @@ void draw_layout(FlowLayout* layout, SDL_Renderer* ren, int x, int y) {
     }
 }
 
-void draw_container(Container* c, SDL_Renderer* ren, int x, int y) {
-    switch (c->type) {
+void draw_container(Container c, SDL_Renderer* ren, int x, int y) {
+    switch (c.type) {
         case WIDGET: {
-            draw_widget(c->widget, ren, x, y);
+            draw_widget(c.widget, ren, x, y);
         } break;
         case FLOW_LAYOUT: {
-            draw_layout(c->flow_layout, ren, x, y);
+            draw_layout(c.flow_layout, ren, x, y);
         } break;
     }
 }

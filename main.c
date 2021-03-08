@@ -14,6 +14,7 @@
 #define R_W 50
 #define R_MARGIN 10
 
+TTF_Font* font;
 
 struct p4_column {
     bool hover;
@@ -64,7 +65,9 @@ static void p4_render_background(SDL_Renderer* ren, int ncol, int nrow) {
     SDL_RenderFillRect(ren, &r);
 }
 
-static void p4_display_board(SDL_Renderer* ren, P4_Game game) {
+static void p4_display_board(SDL_Renderer* ren, Widget* w) {
+    P4_Game game = **((P4_Game**)w->custom);
+    
     SDL_Rect r;
     r.w = R_W;
     r.h = R_W;
@@ -125,11 +128,12 @@ static void render_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int
     SDL_FreeSurface(surface);
 }
 
-static void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
+static void p4_display_game_info(SDL_Renderer* ren, Widget* w) {
+    P4_Game game = **((P4_Game**)w->custom);
     char text[20];
     
     int x = R_MARGIN;
-    int y = game.size.nrow * (R_W + R_MARGIN) + R_MARGIN;
+    int y = R_MARGIN;
 
 
     if (is_finished(game)) {
@@ -272,7 +276,7 @@ int main(int argc, char* argv[]) {
     atexit(SDL_Quit);
 
     int flags = 0;
-    SDL_CreateWindowAndRenderer(window_width, window_height, flags, &win, &ren);
+    SDL_CreateWindowAndRenderer(window_width*2, window_height*2, flags, &win, &ren);
 
     if (!win || !ren)
     {
@@ -282,7 +286,7 @@ int main(int argc, char* argv[]) {
     SDL_SetWindowTitle(win, "P4");
 
     TTF_Init();
-    TTF_Font* font = TTF_OpenFont("SourceSansPro-SemiBold.ttf", 25);
+    font = TTF_OpenFont("SourceSansPro-SemiBold.ttf", 25);
     if (font == NULL) {
         fprintf(stderr,"Error while loading font: %s\n", TTF_GetError());
         return EXIT_FAILURE;
@@ -297,6 +301,40 @@ int main(int argc, char* argv[]) {
 
     game = init_game(ncol, nrow, win_condition);
     columns = p4_init_col(*game);
+
+    struct size w_size = {ncol * (R_W + R_MARGIN) + R_MARGIN, nrow * (R_W + R_MARGIN) + R_MARGIN};
+
+    Widget* board_widget = init_widget(
+        SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888,
+                          SDL_TEXTUREACCESS_TARGET,
+                          ncol * (R_W + R_MARGIN) + R_MARGIN,
+                          nrow * (R_W + R_MARGIN) + R_MARGIN),
+        w_size,
+        true
+    );
+
+    board_widget->custom = (void**) &game;
+    board_widget->custom_s = sizeof(P4_Game);
+    board_widget->update = p4_display_board;
+    
+    layout_add_widget(c.flow_layout, board_widget);
+
+
+    struct size w2_size = {50, 50};
+    Widget* info_widget = init_widget(
+        SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888,
+                          SDL_TEXTUREACCESS_TARGET,
+                          500,
+                          50),
+        w2_size,
+        true
+    );
+
+    info_widget->custom = (void**) &game;
+    info_widget->custom_s = sizeof(P4_Game);
+    info_widget->update = p4_display_game_info;
+    
+    layout_add_widget(c.flow_layout, info_widget);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
@@ -318,11 +356,11 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
         SDL_RenderClear(ren);
 
-        p4_display_board(ren, *game);
-        p4_display_columns(ren, *columns);
-        p4_display_game_info(ren, font, *game);
+        //p4_display_board(ren, *game);
+        //p4_display_columns(ren, *columns);
+        //p4_display_game_info(ren, font, *game);
         
-
+        draw_container(c, ren, 0, 0);
         
         SDL_RenderPresent(ren);
         SDL_Delay(50);

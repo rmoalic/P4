@@ -13,7 +13,8 @@ bool list_is_empty(list l) {
 }
 
 static struct list_element* init_element(void* element, size_t e_size) {
-    struct list_element* new = malloc(e_size);
+    struct list_element* new = malloc(sizeof(struct list_element));
+    new->element = malloc(e_size);
 
     memcpy(new->element, element, e_size);
     new->next = NULL;
@@ -22,8 +23,6 @@ static struct list_element* init_element(void* element, size_t e_size) {
 }
 
 void list_prepend(list *l, void* element, size_t e_size) {
-    assert(l != NULL);
-
     struct list_element* new = init_element(element, e_size);
   
     if (list_is_empty(*l)) {
@@ -36,8 +35,6 @@ void list_prepend(list *l, void* element, size_t e_size) {
 }
 
 void list_append(list *l, void* element, size_t e_size) {
-    assert(l != NULL);
-
     struct list_element* new = init_element(element, e_size);
   
     if (list_is_empty(*l)) {
