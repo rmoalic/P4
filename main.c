@@ -207,54 +207,54 @@ static void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     }
 }
 
+static void parse_arg(int argc, char* argv[], int* ncol, int* nrow, int* win_condition) {
+    if (argc > 1) {
+        if (argc == 4) {          
+            errno = 0;
+            *ncol = strtol(argv[1], NULL, 10);
+            if (errno != 0) {
+                perror("strtol");
+                exit(EXIT_FAILURE);
+            }
+            errno = 0;
+            *nrow = strtol(argv[2], NULL, 10);
+            if (errno != 0) {
+                perror("strtol");
+                exit(EXIT_FAILURE);
+            }
+            errno = 0;
+            *win_condition = strtol(argv[3], NULL, 10);
+            if (errno != 0) {
+                perror("strtol");
+                exit(EXIT_FAILURE);
+            }
+            if (*ncol < 1 || *nrow < 1 || *win_condition < 1) {
+                fprintf(stderr, "ncol, nrow and win_condition must be supperior to 1\n");
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            fprintf(stderr, "USAGE: %s ncol nrow win_condition\n", argv[0]);
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        *ncol = 7;
+        *nrow = 6;
+        *win_condition = 4;
+    }
+}
+
 int main(int argc, char* argv[]) {
     int ncol;
     int nrow;
     int win_condition;
-    
-    if (argc > 1) {
-        if (argc == 4) {          
-            errno = 0;
-            ncol = strtol(argv[1], NULL, 10);
-            if (errno != 0) {
-                perror("strtol");
-                return EXIT_FAILURE;
-            }
-            errno = 0;
-            nrow = strtol(argv[2], NULL, 10);
-            if (errno != 0) {
-                perror("strtol");
-                return EXIT_FAILURE;
-            }
-            errno = 0;
-            win_condition = strtol(argv[3], NULL, 10);
-            if (errno != 0) {
-                perror("strtol");
-                return EXIT_FAILURE;
-            }
-            if (ncol < 1 || nrow < 1 || win_condition < 1) {
-                fprintf(stderr, "ncol, nrow and win_condition must be supperior to 1\n");
-                return EXIT_FAILURE;  
-            }
-        } else {
-            fprintf(stderr, "USAGE: %s ncol nrow win_condition\n", argv[0]);
-            return EXIT_FAILURE;
-        }
-    } else {
-        ncol = 7;
-        nrow = 6;
-        win_condition = 4;
-    }
+
+    parse_arg(argc, argv, &ncol, &nrow, &win_condition);
 
     const int window_width = ncol * (R_W + R_MARGIN) + R_MARGIN;
     const int window_height = nrow * (R_W + R_MARGIN) + R_MARGIN * 2 + 25;
     SDL_Window *win = 0;
     SDL_Renderer *ren = 0;
     SDL_Event input;
-    
-    P4_Game* game;
-    P4_Columns* columns;
-    
     bool quit = false;
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
@@ -283,8 +283,8 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
-    game = p4_init_game(ncol, nrow, win_condition);
-    columns = p4_init_col(*game);
+    P4_Game* game = p4_init_game(ncol, nrow, win_condition);
+    P4_Columns* columns = p4_init_col(*game);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
