@@ -70,7 +70,7 @@ static void p4_display_board(SDL_Renderer* ren, P4_Game game) {
     
     int pos_w = R_MARGIN;
     int pos_h = R_MARGIN;
-    bool won = is_won(game);
+    bool won = p4_is_won(game);
     
     p4_render_background(ren, game.size.ncol, game.size.nrow);
 
@@ -131,9 +131,9 @@ static void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game
     int y = game.size.nrow * (R_W + R_MARGIN) + R_MARGIN;
 
 
-    if (is_finished(game)) {
-        if (is_won(game)) {
-            CASE_COLOR winner = get_game_winner(game);
+    if (p4_is_finished(game)) {
+        if (p4_is_won(game)) {
+            CASE_COLOR winner = p4_get_game_winner(game);
             if (winner == RED) {
                 snprintf(text, 19, "Red WON !");
             } else if (winner == YELLOW) {
@@ -145,7 +145,7 @@ static void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game
             render_text(ren, font, text, x, y, p4_repr(NONE));
         }
     } else {
-        CASE_COLOR active = get_game_active(game);
+        CASE_COLOR active = p4_get_game_active(game);
         if (active == RED) {
             snprintf(text, 19, "Red's turn");
         } else if (active == YELLOW) {
@@ -201,7 +201,7 @@ static void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     for (int i = 0; i < columns->nb; i++) {
         SDL_Rect r = columns->c[i].c;
         if (SDL_PointInRect(&p, &r)) {
-            game_step(game, i);
+            p4_game_step(game, i);
             break;
         }
     }
@@ -283,7 +283,7 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
-    game = init_game(ncol, nrow, win_condition);
+    game = p4_init_game(ncol, nrow, win_condition);
     columns = p4_init_col(*game);
 
     while (! quit) {        
@@ -317,7 +317,7 @@ int main(int argc, char* argv[]) {
     }
     
     p4_free_col(columns);
-    free_game(game);
+    p4_free_game(game);
     TTF_CloseFont(font);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);

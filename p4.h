@@ -32,26 +32,26 @@ typedef struct p4_game {
     int remaining_pieces;
 } P4_Game;
 
-P4_Game* init_game(int ncol, int nrow, int win_condition);
+P4_Game* p4_init_game(int ncol, int nrow, int win_condition);
 
-void reset_game(P4_Game* game);
+void p4_reset_game(P4_Game* game);
 
-void free_game(P4_Game* game);
+void p4_free_game(P4_Game* game);
 
-bool is_finished(P4_Game game);
+bool p4_is_finished(P4_Game game);
 
-bool is_won(P4_Game game);
+bool p4_is_won(P4_Game game);
 
-CASE_COLOR get_game_winner(P4_Game game);
+CASE_COLOR p4_get_game_winner(P4_Game game);
 
-CASE_COLOR get_game_active(P4_Game game);
+CASE_COLOR p4_get_game_active(P4_Game game);
 
-P4_Board_Size get_game_size(P4_Game game);
+P4_Board_Size p4_get_game_size(P4_Game game);
 
-void game_step(P4_Game* game, int col);
+void p4_game_step(P4_Game* game, int col);
 
-char repr_color(CASE_COLOR color);
+char p4_repr_color(CASE_COLOR color);
 
-void debug_print_board(P4_Game game);
+void p4_debug_print_board(P4_Game game);
 
 #endif
