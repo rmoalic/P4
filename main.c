@@ -132,32 +132,42 @@ void render_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int x, int
 
 void p4_display_game_info(SDL_Renderer* ren, TTF_Font* font, P4_Game game) {
     char text[20];
+    const int font_size = 19;
     
     int x = R_MARGIN;
     int y = game.size.nrow * (R_W + R_MARGIN) + R_MARGIN;
+    {
+        SDL_Rect r;
+        r.x = 0;
+        r.y = y;
+        r.h = 3 * R_MARGIN + font_size;
+        r.w = game.size.ncol * (R_W + R_MARGIN) + R_MARGIN;
+        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        SDL_RenderFillRect(ren, &r);
+    }
 
 
     if (is_finished(game)) {
         if (is_won(game)) {
             CASE_COLOR winner = get_game_winner(game);
             if (winner == RED) {
-                snprintf(text, 19, "Red WON !");
+                snprintf(text, font_size, "Red WON !");
             } else if (winner == YELLOW) {
-                snprintf(text, 19, "Yellow WON !");
+                snprintf(text, font_size, "Yellow WON !");
             }
             render_text(ren, font, text, x, y, p4_repr(game.winner));
         } else {
-            snprintf(text, 19, "It's a tie");
+            snprintf(text, font_size, "It's a tie");
             render_text(ren, font, text, x, y, p4_repr(NONE));
         }
     } else {
         CASE_COLOR active = get_game_active(game);
         if (active == RED) {
-            snprintf(text, 19, "Red's turn");
+            snprintf(text, font_size, "Red's turn");
         } else if (active == YELLOW) {
-            snprintf(text, 19, "Yellow's turn");
+            snprintf(text, font_size, "Yellow's turn");
         } else {
-            snprintf(text, 19, "ERROR");
+            snprintf(text, font_size, "ERROR");
         }
         
         render_text(ren, font, text, x, y, p4_repr(game.active));
@@ -188,8 +198,10 @@ void p4_free_col(P4_Columns* columns) {
         free(columns);
 }
 
-void onHover(SDL_Event input, P4_Columns* columns, float xx, float yy) {
+void onHover(SDL_Event input, P4_Columns* columns, int margin_x, int margin_y, float xx, float yy) {
     SDL_Point p = {input.motion.x, input.motion.y};
+    p.x -= margin_x;
+    p.y -= margin_y;
     p.x *= xx;
     p.y *= yy;
 
@@ -203,8 +215,10 @@ void onHover(SDL_Event input, P4_Columns* columns, float xx, float yy) {
     }
 }
 
-void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns, float xx, float yy) {
+void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns, int margin_x, int margin_y, float xx, float yy) {
     SDL_Point p = {input.motion.x, input.motion.y};
+    p.x -= margin_x;
+    p.y -= margin_y;
     p.x *= xx;
     p.y *= yy;
 
@@ -220,6 +234,22 @@ void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns, float xx, floa
         } else {
             reset_game(game);
         }
+    }
+}
+
+void onResize(SDL_Event input, float aratio,  SDL_Rect* rect) {
+    int ww = input.window.data1;
+    int wh = input.window.data2;
+    if (ww < wh) {
+        rect->x = 0;
+        rect->y = (wh -(ww * aratio)) / 2;
+        rect->w = ww;
+        rect->h = ww * aratio;
+    } else {
+        rect->x = (ww - (wh * aratio)) / 2;
+        rect->y = 0;
+        rect->w = wh * aratio;
+        rect->h = wh;
     }
 }
 
@@ -263,9 +293,10 @@ int main(int argc, char* argv[]) {
     }
     const int width = ncol * (R_W + R_MARGIN) + R_MARGIN;
     const int height = nrow * (R_W + R_MARGIN) + R_MARGIN + 25 + 2 * R_MARGIN;
+    const float aratio = width / (height * 1.0);
 
-    const int window_width = 500;
-    const int window_height = 500 + 25 + 2 * R_MARGIN;
+    int window_width = 500;
+    int window_height = 500 + 25 + 2 * R_MARGIN;
     SDL_Window *win = 0;
     SDL_Renderer *ren = 0;
     SDL_Event input;
@@ -282,7 +313,7 @@ int main(int argc, char* argv[]) {
     }
     atexit(SDL_Quit);
 
-    int flags = 0;
+    int flags = SDL_WINDOW_RESIZABLE;
     SDL_CreateWindowAndRenderer(window_width, window_height, flags, &win, &ren);
 
     if (!win || !ren)
@@ -306,8 +337,8 @@ int main(int argc, char* argv[]) {
     game = init_game(ncol, nrow, win_condition);
     columns = p4_init_col(*game);
 
-    float crop_w = width / (window_width * 1.0);
-    float crop_h = height / (window_height * 1.0);
+    float crop_w = width / (texture_r.w * 1.0);
+    float crop_h = height / (texture_r.h * 1.0);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
@@ -315,18 +346,29 @@ int main(int argc, char* argv[]) {
             case SDL_QUIT: {
                 quit = true;
             } break;
+            case SDL_WINDOWEVENT: {
+                if (input.window.event == SDL_WINDOWEVENT_RESIZED) {
+                    onResize(input, aratio, &texture_r);
+
+                    window_width = input.window.data1;
+                    window_height = input.window.data2;
+
+                    crop_w = width / (texture_r.w * 1.0);
+                    crop_h = height / (texture_r.h * 1.0);
+                }
+            } break;
             case SDL_MOUSEMOTION: {
-                onHover(input, columns, crop_w, crop_h);
+                onHover(input, columns, texture_r.x, texture_r.y, crop_w, crop_h);
             } break;
             case SDL_MOUSEBUTTONDOWN: {
-                onClick(input, game, columns, crop_w, crop_h);
+                onClick(input, game, columns, texture_r.x, texture_r.y, crop_w, crop_h);
             } break;
             default: {
             }
             }
         }
         
-        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(ren, 53, 53, 53, 255);
         SDL_RenderClear(ren);
         SDL_SetRenderTarget(ren, texture);
         SDL_RenderClear(ren);
