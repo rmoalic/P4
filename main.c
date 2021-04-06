@@ -331,14 +331,14 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
-    SDL_Texture* texture = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
-    SDL_Rect texture_r = {0, 0, window_width, window_height};
+    SDL_Texture* main_texture = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
+    SDL_Rect main_texture_r = {0, 0, window_width, window_height};
 
     game = init_game(ncol, nrow, win_condition);
     columns = p4_init_col(*game);
 
-    float crop_w = width / (texture_r.w * 1.0);
-    float crop_h = height / (texture_r.h * 1.0);
+    float crop_w = width / (main_texture_r.w * 1.0);
+    float crop_h = height / (main_texture_r.h * 1.0);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
@@ -348,20 +348,20 @@ int main(int argc, char* argv[]) {
             } break;
             case SDL_WINDOWEVENT: {
                 if (input.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    onResize(input, aratio, &texture_r);
+                    onResize(input, aratio, &main_texture_r);
 
                     window_width = input.window.data1;
                     window_height = input.window.data2;
 
-                    crop_w = width / (texture_r.w * 1.0);
-                    crop_h = height / (texture_r.h * 1.0);
+                    crop_w = width / (main_texture_r.w * 1.0);
+                    crop_h = height / (main_texture_r.h * 1.0);
                 }
             } break;
             case SDL_MOUSEMOTION: {
-                onHover(input, columns, texture_r.x, texture_r.y, crop_w, crop_h);
+                onHover(input, columns, main_texture_r.x, main_texture_r.y, crop_w, crop_h);
             } break;
             case SDL_MOUSEBUTTONDOWN: {
-                onClick(input, game, columns, texture_r.x, texture_r.y, crop_w, crop_h);
+                onClick(input, game, columns, main_texture_r.x, main_texture_r.y, crop_w, crop_h);
             } break;
             default: {
             }
@@ -370,7 +370,7 @@ int main(int argc, char* argv[]) {
         
         SDL_SetRenderDrawColor(ren, 53, 53, 53, 255);
         SDL_RenderClear(ren);
-        SDL_SetRenderTarget(ren, texture);
+        SDL_SetRenderTarget(ren, main_texture);
         SDL_RenderClear(ren);
 
         p4_display_board(ren, *game);
@@ -378,7 +378,7 @@ int main(int argc, char* argv[]) {
         p4_display_game_info(ren, font, *game);
         
         SDL_SetRenderTarget(ren, NULL);
-        SDL_RenderCopy(ren, texture, NULL, &texture_r);
+        SDL_RenderCopy(ren, main_texture, NULL, &main_texture_r);
         
         SDL_RenderPresent(ren);
         SDL_Delay(50);
@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
     
     p4_free_col(columns);
     free_game(game);
-    SDL_DestroyTexture(texture);
+    SDL_DestroyTexture(main_texture);
     TTF_CloseFont(font);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
