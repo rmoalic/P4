@@ -192,12 +192,8 @@ static void p4_free_col(P4_Columns* columns) {
         free(columns);
 }
 
-static void onHover(SDL_Event input, P4_Columns* columns, int margin_x, int margin_y, float xx, float yy) {
+static void onHover(SDL_Event input, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
-    p.x -= margin_x;
-    p.y -= margin_y;
-    p.x *= xx;
-    p.y *= yy;
 
     for (int i = 0; i < columns->nb; i++) {
         SDL_Rect r = columns->c[i].c;
@@ -209,12 +205,8 @@ static void onHover(SDL_Event input, P4_Columns* columns, int margin_x, int marg
     }
 }
 
-static void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns, int margin_x, int margin_y, float xx, float yy) {
+static void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns) {
     SDL_Point p = {input.motion.x, input.motion.y};
-    p.x -= margin_x;
-    p.y -= margin_y;
-    p.x *= xx;
-    p.y *= yy;
 
     for (int i = 0; i < columns->nb; i++) {
         SDL_Rect r = columns->c[i].c;
@@ -222,22 +214,6 @@ static void onClick(SDL_Event input, P4_Game* game, P4_Columns* columns, int mar
             p4_game_step(game, i);
             break;
         }
-    }
-}
-
-static void onResize(SDL_Event input, float aratio,  SDL_Rect* rect) {
-    int ww = input.window.data1;
-    int wh = input.window.data2;
-    if (ww < wh) {
-        rect->x = 0;
-        rect->y = (wh -(ww * aratio)) / 2;
-        rect->w = ww;
-        rect->h = ww * aratio;
-    } else {
-        rect->x = (ww - (wh * aratio)) / 2;
-        rect->y = 0;
-        rect->w = wh * aratio;
-        rect->h = wh;
     }
 }
 
@@ -287,9 +263,9 @@ int main(int argc, char* argv[]) {
     const int width = ncol * (R_W + R_MARGIN) + R_MARGIN;
     const int height = nrow * (R_W + R_MARGIN) + R_MARGIN + 25 + 2 * R_MARGIN;
     const float aratio = width / (height * 1.0);
+    int window_width = 500 * aratio;
+    int window_height = 500;
 
-    int window_width = 500;
-    int window_height = 500 + 25 + 2 * R_MARGIN;
     SDL_Window *win = 0;
     SDL_Renderer *ren = 0;
     SDL_Event input;
@@ -320,14 +296,10 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
-    SDL_Texture* main_texture = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
-    SDL_Rect main_texture_r = {0, 0, window_width, window_height};
+    SDL_RenderSetLogicalSize(ren, width, height);
 
     P4_Game* game = p4_init_game(ncol, nrow, win_condition);
     P4_Columns* columns = p4_init_col(*game);
-
-    float crop_w = width / (main_texture_r.w * 1.0);
-    float crop_h = height / (main_texture_r.h * 1.0);
 
     while (! quit) {        
         while (SDL_PollEvent(&input) > 0) {
@@ -337,20 +309,15 @@ int main(int argc, char* argv[]) {
             } break;
             case SDL_WINDOWEVENT: {
                 if (input.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    onResize(input, aratio, &main_texture_r);
-
                     window_width = input.window.data1;
                     window_height = input.window.data2;
-
-                    crop_w = width / (main_texture_r.w * 1.0);
-                    crop_h = height / (main_texture_r.h * 1.0);
                 }
             } break;
             case SDL_MOUSEMOTION: {
-                onHover(input, columns, main_texture_r.x, main_texture_r.y, crop_w, crop_h);
+                onHover(input, columns);
             } break;
             case SDL_MOUSEBUTTONDOWN: {
-                onClick(input, game, columns, main_texture_r.x, main_texture_r.y, crop_w, crop_h);
+                onClick(input, game, columns);
             } break;
             default: {
             }
@@ -359,15 +326,10 @@ int main(int argc, char* argv[]) {
         
         SDL_SetRenderDrawColor(ren, 53, 53, 53, 255);
         SDL_RenderClear(ren);
-        SDL_SetRenderTarget(ren, main_texture);
-        SDL_RenderClear(ren);
 
         p4_display_board(ren, *game);
         p4_display_columns(ren, *columns);
         p4_display_game_info(ren, font, *game);
-        
-        SDL_SetRenderTarget(ren, NULL);
-        SDL_RenderCopy(ren, main_texture, NULL, &main_texture_r);
         
         SDL_RenderPresent(ren);
         SDL_Delay(50);
@@ -375,7 +337,6 @@ int main(int argc, char* argv[]) {
     
     p4_free_col(columns);
     p4_free_game(game);
-    SDL_DestroyTexture(main_texture);
     TTF_CloseFont(font);
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
