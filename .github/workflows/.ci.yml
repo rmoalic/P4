@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - android
     tags:
       - '*'
 jobs:
