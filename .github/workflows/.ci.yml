@@ -25,6 +25,40 @@ jobs:
             name: build-linux
             path: linux_x86_64.tar.gz
 
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: install 3rd party build tools
+        run: |
+          mkdir external
+          cd external
+          curl -fsSL -o SDL2-2.30.0.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.0/SDL2-2.30.0.zip
+          7z x SDL2-2.30.0.zip
+          curl -fsSL -o SDL2_ttf-2.22.0.zip https://github.com/libsdl-org/SDL_ttf/releases/download/release-2.22.0/SDL2_ttf-2.22.0.zip
+          7z x SDL2_ttf-2.22.0.zip
+          echo "NDK_MODULE_PATH=${github.workspace}/external" >>  $GITHUB_ENV
+          cd ..
+      - name: Set Up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+      - uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+      - name: build apk
+        run: | 
+          cd android-project
+          chmod +x ./gradlew ./build.sh
+          ./build.sh
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v2
+        with:
+            name: build-android-debug
+            path: app/build/outputs/apk/debug/app-debug.apk
+  
   build-windows-msvc:
     runs-on: windows-2019
     steps:

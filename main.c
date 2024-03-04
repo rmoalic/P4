@@ -307,6 +307,11 @@ int main(int argc, char* argv[]) {
             case SDL_QUIT: {
                 quit = true;
             } break;
+			case SDL_KEYUP: {
+				if (input.key.keysym.sym == SDLK_AC_BACK) {
+					quit = true;	
+				}
+			} break;
             case SDL_WINDOWEVENT: {
                 if (input.window.event == SDL_WINDOWEVENT_RESIZED) {
                     window_width = input.window.data1;

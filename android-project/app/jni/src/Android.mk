@@ -1,0 +1,19 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := main
+
+LOCAL_CFLAGS := -DANDROID $(LOCAL_CFLAGS)
+
+EXTERNAL := ../external
+
+LOCAL_C_INCLUDES := . $(EXTERNAL)/SDL2-2.30.0/include $(EXTERNAL)/SDL2_ttf-2.22.0
+
+LOCAL_SRC_FILES := main.c p4.c
+
+LOCAL_SHARED_LIBRARIES := SDL2 SDL2_ttf
+
+LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -lOpenSLES -llog -landroid
+
+include $(BUILD_SHARED_LIBRARY)
