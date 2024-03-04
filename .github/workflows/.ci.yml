@@ -38,7 +38,7 @@ jobs:
           7z x SDL2-2.30.0.zip
           curl -fsSL -o SDL2_ttf-2.22.0.zip https://github.com/libsdl-org/SDL_ttf/releases/download/release-2.22.0/SDL2_ttf-2.22.0.zip
           7z x SDL2_ttf-2.22.0.zip
-          echo "NDK_MODULE_PATH=${github.workspace}/external" >>  $GITHUB_ENV
+          echo 'NDK_MODULE_PATH=${{github.workspace}}/external' >>  $GITHUB_ENV
           cd ..
       - name: Set Up JDK
         uses: actions/setup-java@v3
